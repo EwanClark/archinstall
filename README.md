@@ -132,4 +132,3 @@ sof-firmware
 ---
 
 This script is designed for personal use with opinionated defaults. Review and modify as needed for your setup.
-```
