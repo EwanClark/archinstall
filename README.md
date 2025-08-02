@@ -15,8 +15,46 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    ping archlinux.org
    ```
 
-4. **Partition your disk**  
-   Use `lsblk` to view your disks and `cfdisk` to partition them. Refer to the table below for partition sizes:
+Here’s an improved version of the instructions that makes the process clearer and ensures the user selects the correct disk based on the output of `lsblk`:
+
+---
+
+### 4. **Partition Your Disk**
+
+To prepare your disk for Arch Linux installation, follow these steps:
+
+4.1. **Identify the Disk**  
+   Use the `lsblk` command to list all available storage devices. Look for the disk you want to install Arch Linux on. Pay attention to the size and name of the disk to ensure you select the correct one.
+
+   ```bash
+   lsblk
+   ```
+
+   Example output:
+   ```
+   NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+   sda           8:0    0 931.5G  0 disk
+   ├─sda1        8:1    0 512.0M  0 part
+   ├─sda2        8:2    0 27.0G   0 part
+   nvme0n1     259:0    0 256.0G  0 disk
+   ```
+
+   In this example, the disk `nvme0n1` is a 256 GB SSD, which is likely the target for installation as the `sda` disk is the Arch Linux live install USB.
+
+4.2. **Partition the Disk**  
+   Once you've identified the correct disk, use the `cfdisk` command to partition it. Replace `<disk>` with the name of the disk you found in the `lsblk` output (e.g., `/dev/nvme0n1`).
+
+   ```bash
+   cfdisk /dev/<disk>
+   ```
+
+   Example:
+   ```bash
+   cfdisk /dev/nvme0n1
+   ```
+
+4.3. **Create Partitions**  
+   Refer to the table below for suggested partition sizes:
 
    | Partition Type | Suggested Size         | Notes                                      |
    |----------------|------------------------|--------------------------------------------|
@@ -24,10 +62,10 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    | Swap           | 2 GB - 16 GB           | Match your RAM size                       |
    | Root           | Remaining space        | Main system partition. Use all space left |
 
-   Example: For a 256 GB SSD, you might allocate:
-   - 1 GB for EFI
-   - 8 GB for Swap
-   - ~247 GB for Root
+   Example for a 256 GB SSD:
+   - **EFI Boot**: 1 GB
+   - **Swap**: 8 GB
+   - **Root**: ~247 GB
 
 5. **Install Git**  
    Run the following command to install Git:  
