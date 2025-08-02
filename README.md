@@ -15,11 +15,11 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    ping archlinux.org
    ```
 
-### 4. **Partition Your Disk**
+### 3. **Partition Your Disk**
 
 To prepare your disk for Arch Linux installation, follow these steps:
 
-4.1. **Identify the Disk**  
+3.1. **Identify the Disk**  
    Use the `lsblk` command to list all available storage devices. Look for the disk you want to install Arch Linux on. Pay attention to the size and name of the disk to ensure you select the correct one.
 
    ```bash
@@ -37,7 +37,7 @@ To prepare your disk for Arch Linux installation, follow these steps:
 
    In this example, the disk `nvme0n1` is a 256 GB SSD, which is likely the target for installation as the `sda` disk is the Arch Linux live install USB.
 
-4.2. **Partition the Disk**  
+3.2. **Partition the Disk**  
    Once you've identified the correct disk, use the `cfdisk` command to partition it. Replace `<disk>` with the name of the disk you found in the `lsblk` output (e.g., `/dev/nvme0n1`).
 
    ```bash
@@ -49,7 +49,7 @@ To prepare your disk for Arch Linux installation, follow these steps:
    cfdisk /dev/nvme0n1
    ```
 
-4.3. **Create Partitions**  
+3.3. **Create Partitions**  
    Refer to the table below for suggested partition sizes:
 
    | Partition Type | Suggested Size         | Notes                                      |
@@ -63,25 +63,25 @@ To prepare your disk for Arch Linux installation, follow these steps:
    - **Swap**: 8 GB
    - **Root**: ~247 GB
 
-5. **Install Git**  
+4. **Install Git**  
    Run the following command to install Git:  
    ```bash
    sudo pacman -Sy git
    ```
 
-6. **Clone the repository**  
+5. **Clone the repository**  
    Download the script from the repository:  
    ```bash
    git clone https://github.com/ewanclark/archinstall
    ```
 
-7. **View your partitions**  
+6. **View your partitions**  
    Before running the sciprt use `lsblk` to show partitions. This will be helpful when the script is running as you can't run commands:
    ```bash
    lsblk
    ```
    
-8. **Run the installation script**  
+7. **Run the installation script**  
    Navigate to the cloned directory, make the script executable, and run it. You will need to input partitions, usernames, and passwords:  
    ```bash
    cd archinstall
@@ -89,13 +89,13 @@ To prepare your disk for Arch Linux installation, follow these steps:
    ./install.sh
    ```
 
-9. **Reboot and enable secure boot setup mode**  
+8. **Reboot and enable secure boot setup mode**  
     After installation, reboot into your BIOS/UEFI settings and enable **Secure Boot Setup Mode**.
 
-10. **Log into your Arch system**  
+9. **Log into your Arch system**  
     Once booted into your new system, log in with the user credentials you created during installation.
 
-11. **Run the secure boot setup script**  
+10. **Run the secure boot setup script**  
     Complete the secure boot setup by running:  
     ```bash
     sudo ./setup_secure_boot.sh
