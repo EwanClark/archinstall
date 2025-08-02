@@ -24,7 +24,7 @@ print_error() {
 
 # Check if secure boot is in setup mode
 print_info "Checking secure boot status..."
-if ! bootctl status | grep -q "Setup Mode: yes"; then
+if ! bootctl status | grep -q "Secure Boot: disabled (setup)"; then
     print_error "Secure boot is not in setup mode!"
     print_warning "Please enter UEFI/BIOS setup and enable Setup Mode for secure boot"
     print_warning "This usually involves clearing/deleting secure boot keys"
