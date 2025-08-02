@@ -87,26 +87,26 @@ set -e  # Exit on any error
 
 # Colors for output
 RED='\033[0;31m'
-BLUE='\033[1;34m'
-YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
 print_info() {
-    echo -e "\${BLUE}[INFO]\${NC} \$1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 print_warning() {
-    echo -e "\${YELLOW}[WARNING]\${NC} \$1"
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 print_error() {
-    echo -e "\${RED}[ERROR]\${NC} \$1"
+    echo -e "${RED}[ERROR]${NC} $1"
 }
 
 print_success() {
-    echo -e "\${GREEN}[SUCCESS]\${NC} \$1"
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 # Setup users and passwords
@@ -175,33 +175,31 @@ set -e
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[1;34m'
 YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
 print_info() {
-    echo -e "\${BLUE}[INFO]\${NC} \$1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 print_warning() {
-    echo -e "\${YELLOW}[WARNING]\${NC} \$1"
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 print_error() {
-    echo -e "\${RED}[ERROR]\${NC} \$1"
+    echo -e "${RED}[ERROR]${NC} $1"
 }
 
 print_success() {
-    echo -e "\${GREEN}[SUCCESS]\${NC} \$1"
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 # Check if script is run as root
-if [[ "\$EUID" -ne 0 ]]; then
-    print_error "This script must be run as root!"
-    print_warning "Please run it using: sudo ./setup_secure_boot.sh"
-    exit 1
-fi
+print_warning "Have you run this script as root? If not, press Ctrl+C and run it with sudo."
+print_warning "If you have, press Enter to continue."
+read -r
 
 # Check if secure boot is in setup mode
 print_info "Checking secure boot status..."
