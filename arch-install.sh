@@ -113,10 +113,10 @@ sed -i '/^MODULES=/s/)/ nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkin
 
 # Sign bootloader and kernel for secure boot
 sbctl create-keys
-sbctl enroll-keys --microsoft
+sudo sbctl enroll-keys --microsoft
 
 # Rebuild initramfs
-mkinitcpio -P
+sudo mkinitcpio -P
 
 # Setup users and passwords
 echo "Please enter root password:"
@@ -130,12 +130,12 @@ passwd $USERNAME
 sed -i '/^# %wheel ALL=(ALL) ALL/s/^# //' /etc/sudoers
 
 # Setup grub
-grub-install $BOOT_PARTITION --modules="all_video boot btrfs cat chain configfile echo efifwsetup efinet ext2 fat font gettext gfxmenu gfxterm gfxterm_background gzio halt help hfsplus iso9660 jpeg keystatus loadenv loopback linux ls lsefi lsefimmap lsefisystab lssal memdisk minicmd normal ntfs part_apple part_msdos part_gpt password_pbkdf2 png probe reboot regexp search search_fs_uuid search_fs_file search_label sleep smbios squash4 test true video xfs zfs zfscrypt zfsinfo play cpuid tpm cryptodisk luks lvm mdraid09 mdraid1x raid5rec raid6rec" --disable-shim-lock --efi-directory=/boot/efi
-grub-mkconfig -o /boot/grub/grub.cfg
+sudo grub-install $BOOT_PARTITION --modules="all_video boot btrfs cat chain configfile echo efifwsetup efinet ext2 fat font gettext gfxmenu gfxterm gfxterm_background gzio halt help hfsplus iso9660 jpeg keystatus loadenv loopback linux ls lsefi lsefimmap lsefisystab lssal memdisk minicmd normal ntfs part_apple part_msdos part_gpt password_pbkdf2 png probe reboot regexp search search_fs_uuid search_fs_file search_label sleep smbios squash4 test true video xfs zfs zfscrypt zfsinfo play cpuid tpm cryptodisk luks lvm mdraid09 mdraid1x raid5rec raid6rec" --disable-shim-lock --efi-directory=/boot/efi
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 # sign files, run this after installing grub
-sbctl sign /boot/vmlinuz-linux
-sbctl sign /boot/efi/EFI/arch/grubx64.efi
+sudo sbctl sign /boot/vmlinuz-linux
+sudo sbctl sign /boot/efi/EFI/arch/grubx64.efi
 
 echo "Chroot configuration completed!"
 EOF
