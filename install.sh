@@ -23,6 +23,10 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
 # Get partition information
 print_info "Please provide partitions:"
 read -p "Enter boot partition (e.g., /dev/nvme1n1p1 or /dev/sda1): " BOOT_PARTITION
@@ -85,6 +89,7 @@ set -e  # Exit on any error
 RED='\033[0;31m'
 BLUE='\033[1;34m'
 YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
@@ -100,6 +105,10 @@ print_error() {
     echo -e "\${RED}[ERROR]\${NC} \$1"
 }
 
+print_success() {
+    echo -e "\${GREEN}[SUCCESS]\${NC} \$1"
+}
+
 # Setup users and passwords
 print_info "Setting up users and passwords..."
 echo "Please enter root password:"
@@ -110,8 +119,18 @@ useradd -m -G wheel -s /bin/bash $USERNAME
 echo "Please enter password for user $USERNAME:"
 passwd $USERNAME
 
+# Setup sudo
 print_info "Enabling sudo for wheel group..."
-sed -i '/^# %wheel ALL=(ALL:All) ALL/s/^# //' /etc/sudoers
+cp /etc/sudoers /etc/sudoers.bak
+sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
+if visudo -c; then
+    print_success "The sudoers file was successfully updated and validated."
+    rm /etc/sudoers.bak
+else
+    print_error "There was an error in the sudoers file. Restoring the backup."
+    cp /etc/sudoers.bak /etc/sudoers
+    exit 1
+fi
 
 # Setup timezone and clock
 print_info "Setting up timezone and clock..."
