@@ -2,33 +2,108 @@
 
 A streamlined Arch Linux installation script with NVIDIA drivers and secure boot support.
 
+---
+
 ## Installation
 
-1. **Boot from Arch Linux ISO and connect to internet**
-2. **Manually partition your disk** with EFI boot, swap, and root partitions
-3. **Download and run the script:**
+1. **Boot into the Arch Linux live ISO**  
+   Start your system using the Arch Linux installation media.
+
+2. **Connect to the internet**  
+   Use `ping archlinux.org` to verify connectivity. If you're using Ethernet, it should work automatically.
+
+3. **Partition your disk**  
+   Use `lsblk` to view your disks and `cfdisk` to partition them. Refer to the table below for partition sizes:
+
+   | Partition Type | Suggested Size         | Notes                                      |
+   |----------------|------------------------|--------------------------------------------|
+   | EFI Boot       | 512 MB - 1 GB          | Required for UEFI boot                    |
+   | Swap           | 2 GB - 16 GB           | Match your RAM size                       |
+   | Root           | Remaining space        | Main system partition. Use all space left |
+
+   Example: For a 256 GB SSD, you might allocate:
+   - 1 GB for EFI
+   - 8 GB for Swap
+   - ~247 GB for Root
+
+4. **Install Git**  
+   Run the following command to install Git:  
    ```bash
-   curl -O https://raw.githubusercontent.com/yourusername/arch-install/main/install.sh
+   sudo pacman -Sy git
+   ```
+
+5. **Clone the repository**  
+   Download the script from the repository:  
+   ```bash
+   git clone https://github.com/ewanclark/archinstall
+   ```
+
+6. **View your partitions**  
+   Before running the script, use `lsblk` to visualize your partitions and ensure they are correctly set up. This will help you enter the correct partition names during the script execution.
+
+7. **Run the installation script**  
+   Navigate to the cloned directory, make the script executable, and run it:  
+   ```bash
+   cd archinstall
    chmod +x install.sh
    ./install.sh
    ```
-4. **After reboot, enable secure boot setup mode in BIOS/UEFI**
-5. **Run the secure boot script:**
-   ```bash
-   sudo ./setup_secure_boot.sh
-   ```
+
+8. **Enter partition information**  
+   Use the output from `lsblk` to enter the correct partition names when prompted.
+
+9. **Follow the script instructions**  
+   The script will guide you through the installation process, including setting up users, passwords, and system configuration.
+
+10. **Reboot and enable secure boot setup mode**  
+    After installation, reboot into your BIOS/UEFI settings and enable **Secure Boot Setup Mode**.
+
+11. **Log into your Arch system**  
+    Once booted into your new system, log in with the user credentials you created during installation.
+
+12. **Run the secure boot setup script**  
+    Complete the secure boot setup by running:  
+    ```bash
+    sudo ./setup_secure_boot.sh
+    ```
+
+---
 
 ## Settings
 
+### Assumptions
 This script assumes and configures:
 - **UEFI system** with secure boot capability
 - **Intel CPU** (installs `intel-ucode`)
-- **NVIDIA graphics card** with drivers
+- **NVIDIA graphics card** with proprietary drivers
 - **Ethernet connection** (NetworkManager enabled)
 - **UK timezone** (Europe/London)
 - **en_GB.UTF-8 locale**
 - **Hostname:** `arch`
-- **Packages:** Base system + NVIDIA drivers + GRUB + secure boot tools + development tools
-- **Partitions:** You've manually created EFI boot, swap, and root partitions
+- **Partitions:** You've manually created EFI boot, swap, and root partitions (swap is required)
 
-**Note:** This is a personal script with opinionated defaults. Review and modify as needed for your setup.
+### Installed Packages
+The following packages will be installed:
+
+```bash
+base
+linux
+linux-firmware
+base-devel
+intel-ucode
+grub
+efibootmgr
+os-prober
+nvidia-dkms
+nvidia-settings
+nvidia-utils
+sbctl
+linux-headers
+nano
+networkmanager
+sof-firmware
+``` 
+
+---
+
+This script is designed for personal use with opinionated defaults. Review and modify as needed for your setup.
