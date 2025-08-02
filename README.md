@@ -2,8 +2,6 @@
 
 A streamlined Arch Linux installation script with NVIDIA drivers and secure boot support.
 
----
-
 ## Installation
 
 1. **Boot into the Arch Linux live ISO**  
