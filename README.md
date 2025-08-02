@@ -39,7 +39,7 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    ```
 
 6. **View your partitions**  
-   Before running the sciprt use `lsblk` to show partitions. This will be helpful when the script is running as you cant close it
+   Before running the sciprt use `lsblk` to show partitions. This will be helpful when the script is running as you can't run commands:
    ```bash
    lsblk
    ```
