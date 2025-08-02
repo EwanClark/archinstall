@@ -18,55 +18,55 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
 3. **Partition disk**
    Make the target disk to install Arch Linux ready for the install script.
 
-#### 3.1 Identify the Disk  
-   Use the `lsblk` command to list all available storage devices. Look for the disk you want to install Arch Linux on. Pay attention to the size and name of the disk to ensure you select the correct one.
-
-   ```bash
-   lsblk
-   ```
-
-   Example output:
-   ```
-   NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
-   sda           8:0    0 931.5G  0 disk
-   ├─sda1        8:1    0 512.0M  0 part
-   ├─sda2        8:2    0 27.0G   0 part
-   nvme0n1     259:0    0 256.0G  0 disk
-   ```
-
-   In this example:
-   - The disk `nvme0n1` is a 256 GB SSD, which is likely the target for installation.
-   - The `sda` disk is the Arch Linux live install USB.
-
----
-
-#### 3.2 Partition the Disk  
-   Once you've identified the correct disk, use the `cfdisk` command to partition it. Replace `<disk>` with the name of the disk you found in the `lsblk` output (e.g., `/dev/nvme0n1`).
-
-   ```bash
-   cfdisk /dev/<disk>
-   ```
-
-   Example:
-   ```bash
-   cfdisk /dev/nvme0n1
-   ```
-
----
-
-#### 3.3 Create Partitions  
-   Use the table below as a guide for partitioning your disk:
-
-   | Partition Type | Suggested Size         | Notes                                      |
-   |----------------|------------------------|--------------------------------------------|
-   | EFI Boot       | 512 MB - 1 GB          | Required for UEFI boot                    |
-   | Swap           | 2 GB - 16 GB           | Match your RAM size                       |
-   | Root           | Remaining space        | Main system partition. Use all space left |
-
-   Example for a 256 GB SSD:
-   - **EFI Boot**: 1 GB
-   - **Swap**: 8 GB
-   - **Root**: ~247 GB
+   #### 3.1 Identify the Disk  
+      Use the `lsblk` command to list all available storage devices. Look for the disk you want to install Arch Linux on. Pay attention to the size and name of the disk to ensure you select the correct one.
+   
+      ```bash
+      lsblk
+      ```
+   
+      Example output:
+      ```
+      NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+      sda           8:0    0 931.5G  0 disk
+      ├─sda1        8:1    0 512.0M  0 part
+      ├─sda2        8:2    0 27.0G   0 part
+      nvme0n1     259:0    0 256.0G  0 disk
+      ```
+   
+      In this example:
+      - The disk `nvme0n1` is a 256 GB SSD, which is likely the target for installation.
+      - The `sda` disk is the Arch Linux live install USB.
+   
+   ---
+   
+   #### 3.2 Partition the Disk  
+      Once you've identified the correct disk, use the `cfdisk` command to partition it. Replace `<disk>` with the name of the disk you found in the `lsblk` output (e.g., `/dev/nvme0n1`).
+   
+      ```bash
+      cfdisk /dev/<disk>
+      ```
+   
+      Example:
+      ```bash
+      cfdisk /dev/nvme0n1
+      ```
+   
+   ---
+   
+   #### 3.3 Create Partitions  
+      Use the table below as a guide for partitioning your disk:
+   
+      | Partition Type | Suggested Size         | Notes                                      |
+      |----------------|------------------------|--------------------------------------------|
+      | EFI Boot       | 512 MB - 1 GB          | Required for UEFI boot                    |
+      | Swap           | 2 GB - 16 GB           | Match your RAM size                       |
+      | Root           | Remaining space        | Main system partition. Use all space left |
+   
+      Example for a 256 GB SSD:
+      - **EFI Boot**: 1 GB
+      - **Swap**: 8 GB
+      - **Root**: ~247 GB
 
 4. **Install Git**  
    Run the following command to install Git:  
