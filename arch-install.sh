@@ -7,11 +7,12 @@ set -e  # Exit on any error
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
 print_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 print_warning() {
@@ -78,61 +79,17 @@ genfstab -U /mnt > /mnt/etc/fstab
 print_info "Creating chroot configuration script..."
 cat > /mnt/chroot_script.sh << EOF
 #!/bin/bash
-set -e
-
-# Setup timezone and clock
-ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
-hwclock --systohc
-
-# Set locale
-sed -i '/^#en_GB.UTF-8 UTF-8/s/^#//' /etc/locale.gen
-locale-gen
-echo "LANG=en_GB.UTF-8" > /etc/locale.conf
-
-# Set hostname
-echo "arch" > /etc/hostname
-
-# Enable core services
-systemctl enable NetworkManager
-
-# Setup nvidia
-nvidia-xconfig
-sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
-sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/s/".*"/"loglevel=3 nvidia-drm.modeset=1"/' /etc/default/grub
-sed -i '/^MODULES=/s/)/ nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
-
-# Rebuild initramfs
-mkinitcpio -P
-
-# Setup users and passwords
-echo "Please enter root password:"
-passwd
-
-useradd -m -G wheel -s /bin/bash $USERNAME
-echo "Please enter password for user $USERNAME:"
-passwd $USERNAME
-
-# Enable sudo for wheel group
-sed -i '/^# %wheel ALL=(ALL:All) ALL/s/^# //' /etc/sudoers
-
-# Setup grub
-grub-install $BOOT_PARTITION --modules="all_video boot btrfs cat chain configfile echo efifwsetup efinet ext2 fat font gettext gfxmenu gfxterm gfxterm_background gzio halt help hfsplus iso9660 jpeg keystatus loadenv loopback linux ls lsefi lsefimmap lsefisystab lssal memdisk minicmd normal ntfs part_apple part_msdos part_gpt password_pbkdf2 png probe reboot regexp search search_fs_uuid search_fs_file search_label sleep smbios squash4 test true video xfs zfs zfscrypt zfsinfo play cpuid tpm cryptodisk luks lvm mdraid09 mdraid1x raid5rec raid6rec" --disable-shim-lock --efi-directory=/boot/efi
-grub-mkconfig -o /boot/grub/grub.cfg
-
-# Create secure boot setup script in user's home directory
-cat > /home/$USERNAME/setup_secure_boot.sh << SECURE_BOOT
-#!/bin/bash
-set -e
+set -e  # Exit on any error
 
 # Colors for output
 RED='\033[0;31m'
-GREEN='\033[0;32m'
+BLUE='\033[1;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
 print_info() {
-    echo -e "\${GREEN}[INFO]\${NC} \$1"
+    echo -e "\${BLUE}[INFO]\${NC} \$1"
 }
 
 print_warning() {
@@ -142,6 +99,90 @@ print_warning() {
 print_error() {
     echo -e "\${RED}[ERROR]\${NC} \$1"
 }
+
+# Setup users and passwords
+print_info "Setting up users and passwords..."
+echo "Please enter root password:"
+passwd
+
+print_info "Creating user $USERNAME..."
+useradd -m -G wheel -s /bin/bash $USERNAME
+echo "Please enter password for user $USERNAME:"
+passwd $USERNAME
+
+print_info "Enabling sudo for wheel group..."
+sed -i '/^# %wheel ALL=(ALL:All) ALL/s/^# //' /etc/sudoers
+
+# Setup timezone and clock
+print_info "Setting up timezone and clock..."
+ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
+hwclock --systohc
+
+# Set locale
+print_info "Configuring locale..."
+sed -i '/^#en_GB.UTF-8 UTF-8/s/^#//' /etc/locale.gen
+locale-gen
+echo "LANG=en_GB.UTF-8" > /etc/locale.conf
+
+# Set hostname
+print_info "Setting hostname..."
+echo "arch" > /etc/hostname
+
+# Enable core services
+print_info "Enabling NetworkManager service..."
+systemctl enable NetworkManager
+
+# Setup NVIDIA drivers
+print_info "Configuring NVIDIA drivers..."
+nvidia-xconfig
+sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/s/".*"/"loglevel=3 nvidia-drm.modeset=1"/' /etc/default/grub
+sed -i '/^MODULES=/s/)/ nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+
+print_info "Rebuilding initramfs..."
+mkinitcpio -P
+
+# Setup GRUB
+print_info "Installing and configuring GRUB..."
+grub-install $BOOT_PARTITION --disable-shim-lock --efi-directory=/boot/efi --modules="all_video boot btrfs cat chain configfile echo efifwsetup efinet ext2 fat font gettext gfxmenu gfxterm gfxterm_background gzio halt help hfsplus iso9660 jpeg keystatus loadenv loopback linux ls lsefi lsefimmap lsefisystab lssal memdisk minicmd normal ntfs part_apple part_msdos part_gpt password_pbkdf2 png probe reboot regexp search search_fs_uuid search_fs_file search_label sleep smbios squash4 test true video xfs zfs zfscrypt zfsinfo play cpuid tpm cryptodisk luks lvm mdraid09 mdraid1x raid5rec raid6rec"
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# Create secure boot setup script in user's home directory
+print_info "Creating secure boot setup script..."
+cat > /home/$USERNAME/setup_secure_boot.sh << SECURE_BOOT
+#!/bin/bash
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[1;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_info() {
+    echo -e "\${BLUE}[INFO]\${NC} \$1"
+}
+
+print_warning() {
+    echo -e "\${YELLOW}[WARNING]\${NC} \$1"
+}
+
+print_error() {
+    echo -e "\${RED}[ERROR]\${NC} \$1"
+}
+
+print_success() {
+    echo -e "\${GREEN}[SUCCESS]\${NC} \$1"
+}
+
+# Check if script is run as root
+if [[ "\$EUID" -ne 0 ]]; then
+    print_error "This script must be run as root!"
+    print_warning "Please run it using: sudo ./setup_secure_boot.sh"
+    exit 1
+fi
 
 # Check if secure boot is in setup mode
 print_info "Checking secure boot status..."
@@ -159,13 +200,18 @@ sbctl enroll-keys --microsoft
 sbctl sign /boot/vmlinuz-linux
 sbctl sign /boot/efi/EFI/arch/grubx64.efi
 
+# Rebuild initramfs
+mkinitcpio -P
+
 print_info "Secure boot setup completed!"
+print_warning "You can now delete this script using: rm ~/setup_secure_boot.sh"
+print_success "Your Arch Linux system is now fully set up!"
 SECURE_BOOT
 
 chmod +x /home/$USERNAME/setup_secure_boot.sh
 chown $USERNAME:$USERNAME /home/$USERNAME/setup_secure_boot.sh
 
-echo "Chroot configuration completed!"
+print_info "Chroot configuration completed!"
 EOF
 
 # Make chroot script executable
@@ -173,7 +219,6 @@ chmod +x /mnt/chroot_script.sh
 
 # Enter system and run configuration
 print_info "Entering chroot environment..."
-print_warning "You will be prompted to set passwords for root and $USERNAME"
 
 arch-chroot /mnt /chroot_script.sh
 
@@ -182,7 +227,7 @@ rm /mnt/chroot_script.sh
 
 # Final steps
 print_info "Installation completed!"
-print_warning "Please reboot and enable secure boot, then run the setup_secure_boot.sh script in the home directory."
+print_warning "Please reboot and enable secure boot, then run the setup_secure_boot.sh script in the home directory as your user using: sudo ./setup_secure_boot.sh"
 
 read -p "Reboot now? (y/N): " REBOOT
 if [[ "$REBOOT" =~ ^[Yy]$ ]]; then
