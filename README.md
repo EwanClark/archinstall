@@ -44,27 +44,21 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    lsblk
    ```
    
-8. **Run the installation script**  
-   Navigate to the cloned directory, make the script executable, and run it:  
+7. **Run the installation script**  
+   Navigate to the cloned directory, make the script executable, and run it. You will need to input partitions, usernames, and passwords:  
    ```bash
    cd archinstall
    chmod +x install.sh
    ./install.sh
    ```
 
-9. **Enter partition information**  
-   Use the output from `lsblk` to enter the correct partition names when prompted.
-
-10. **Follow the script instructions**  
-   The script will guide you through the installation process, including setting up users, passwords, and system configuration.
-
-11. **Reboot and enable secure boot setup mode**  
+8. **Reboot and enable secure boot setup mode**  
     After installation, reboot into your BIOS/UEFI settings and enable **Secure Boot Setup Mode**.
 
-12. **Log into your Arch system**  
+9. **Log into your Arch system**  
     Once booted into your new system, log in with the user credentials you created during installation.
 
-13. **Run the secure boot setup script**  
+10. **Run the secure boot setup script**  
     Complete the secure boot setup by running:  
     ```bash
     sudo ./setup_secure_boot.sh
