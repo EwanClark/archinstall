@@ -15,11 +15,8 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    ping archlinux.org
    ```
 
-### 3. **Partition Your Disk**
-
-To prepare your disk for Arch Linux installation, follow these steps:
-
----
+3. **Partition disk**
+   Make the target disk to install Arch Linux ready for the install script.
 
 #### 3.1 Identify the Disk  
    Use the `lsblk` command to list all available storage devices. Look for the disk you want to install Arch Linux on. Pay attention to the size and name of the disk to ensure you select the correct one.
