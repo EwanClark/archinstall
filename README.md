@@ -15,10 +15,6 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    ping archlinux.org
    ```
 
-Here’s an improved version of the instructions that makes the process clearer and ensures the user selects the correct disk based on the output of `lsblk`:
-
----
-
 ### 4. **Partition Your Disk**
 
 To prepare your disk for Arch Linux installation, follow these steps:
