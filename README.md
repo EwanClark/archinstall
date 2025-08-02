@@ -10,9 +10,12 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    Start your system using the Arch Linux installation media.
 
 2. **Connect to the internet**  
-   Use `ping archlinux.org` to verify connectivity. If you're using Ethernet, it should work automatically.
+   Check internet connection. If you're using Ethernet, it should work automatically:
+   ```bash
+   ping archlinux.org
+   ```
 
-3. **Partition your disk**  
+4. **Partition your disk**  
    Use `lsblk` to view your disks and `cfdisk` to partition them. Refer to the table below for partition sizes:
 
    | Partition Type | Suggested Size         | Notes                                      |
@@ -26,25 +29,25 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    - 8 GB for Swap
    - ~247 GB for Root
 
-4. **Install Git**  
+5. **Install Git**  
    Run the following command to install Git:  
    ```bash
    sudo pacman -Sy git
    ```
 
-5. **Clone the repository**  
+6. **Clone the repository**  
    Download the script from the repository:  
    ```bash
    git clone https://github.com/ewanclark/archinstall
    ```
 
-6. **View your partitions**  
+7. **View your partitions**  
    Before running the sciprt use `lsblk` to show partitions. This will be helpful when the script is running as you can't run commands:
    ```bash
    lsblk
    ```
    
-7. **Run the installation script**  
+8. **Run the installation script**  
    Navigate to the cloned directory, make the script executable, and run it. You will need to input partitions, usernames, and passwords:  
    ```bash
    cd archinstall
@@ -52,13 +55,13 @@ A streamlined Arch Linux installation script with NVIDIA drivers and secure boot
    ./install.sh
    ```
 
-8. **Reboot and enable secure boot setup mode**  
+9. **Reboot and enable secure boot setup mode**  
     After installation, reboot into your BIOS/UEFI settings and enable **Secure Boot Setup Mode**.
 
-9. **Log into your Arch system**  
+10. **Log into your Arch system**  
     Once booted into your new system, log in with the user credentials you created during installation.
 
-10. **Run the secure boot setup script**  
+11. **Run the secure boot setup script**  
     Complete the secure boot setup by running:  
     ```bash
     sudo ./setup_secure_boot.sh
