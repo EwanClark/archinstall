@@ -73,7 +73,7 @@ swapon "$SWAP_PARTITION"
 
 # Install system
 print_info "Installing packages (this may take a while)..."
-pacstrap /mnt base linux linux-firmware intel-ucode sof-firmware base-devel grub efibootmgr nano networkmanager nvidia-dkms nvidia-settings nvidia-utils sbctl linux-headers os-prober
+pacstrap /mnt base linux linux-firmware intel-ucode sof-firmware base-devel grub efibootmgr nano networkmanager nvidia-dkms nvidia-settings nvidia-utils sbctl linux-headers os-prober ntfs-3g
 
 # Generate file system tab
 print_info "Generating fstab..."
