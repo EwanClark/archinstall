@@ -1,0 +1,104 @@
+make partitions:
+lsblk
+which device would you like to use?
+cfdisk /dev/{device}
+lsblk
+and then ask which partitons are boot swap and root and then any other paritions we found for lsblk ask them if they want it mounted at a specific place and if that place is in the home dir use {homedir}/{customdir} format if not use this format {/customdir}. reacursiavly ask about other partitions and where and if they want it setup for auto mounting. ask if ntfs or ext4 and that if something different they will have to make the command and they will have the partition they are currently doing on display so they can make the command.
+
+format partitions:
+mkfs.fat -F 32 {boot partition}
+mkswap {swap partition}
+mkfs.ext4 {root partition}
+
+mount partitions:
+mount {root partition} /mnt
+mount --mkdir {boot partition} /mnt/boot/efi
+swapon {swap partition}
+
+install packages and system:
+pacstrap /mnt base linux linux-firmware intel-ucode sof-firmware base-devel grub efibootmgr nano networkmanager nvidia nvidia-settings nvidia-utils linux-headers os-prober git
+
+chroot:
+arch-chroot
+
+account setup:
+passwd
+useradd -m G wheel -s /bin/bash {username}
+passwd {username}
+
+cp /etc/sudoers /etc/sudoers.bak
+sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
+if visudo -c; then
+    print_success "The sudoers file was successfully updated and validated."
+    rm /etc/sudoers.bak
+else
+    print_error "There was an error in the sudoers file. Restoring the backup."
+    cp /etc/sudoers.bak /etc/sudoers
+    exit 1
+fi
+
+timezone:
+ln -sf /usr/share/zoneinfo/{zone}/{zone} /etc/localtime
+hwclock --systohc
+
+locale:
+SET WHICH LOCALE
+sed -i '/^#en_GB.UTF-8 UTF-8/s/^#//' /etc/locale.gen
+locale-gen
+echo "LANG=en_GB.UTF-8" > /etc/locale.conf
+
+hostname:
+echo "{hostname}" > /etc/hostname
+
+enable services:
+systemctl enable NetworkManager
+
+NVIDIA:
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/s/".*"/"loglevel=3 nvidia-drm.modeset=1"/' /etc/default/grub
+sed -i '/^MODULES=/s/)/ nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+mkinitcpio -P
+
+grub:
+sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+grub-install $BOOT_PARTITION --disable-shim-lock --efi-directory=/boot/efi --modules="all_video boot btrfs cat chain configfile echo efifwsetup efinet ext2 fat font gettext gfxmenu gfxterm gfxterm_background gzio halt help hfsplus iso9660 jpeg keystatus loadenv loopback linux ls lsefi lsefimmap lsefisystab lssal memdisk minicmd normal ntfs part_apple part_msdos part_gpt password_pbkdf2 png probe reboot regexp search search_fs_uuid search_fs_file search_label sleep smbios squash4 test true video xfs zfs zfscrypt zfsinfo play cpuid tpm cryptodisk luks lvm mdraid09 mdraid1x raid5rec raid6rec"
+grub-mkconfig -o /boot/grub/grub.cfg
+
+secure boot on restart and setup mode:
+""
+print_warning "Have you run this script as root? If not, press Ctrl+C and run it with sudo."
+if ! bootctl status | grep -q "Secure Boot: disabled (setup)"; then
+    print_error "Secure boot is not in setup mode!"
+    print_warning "Please enter UEFI/BIOS setup and enable Setup Mode for secure boot"
+    exit 1
+fi
+
+sbctl create-keys
+NEED TO CHECK ABOUT --microsoft FLAG
+sbctl enroll-keys --microsoft
+sbctl sign /boot/vmlinuz-linux
+sbctl sign /boot/efi/EFI/arch/grubx64.efi
+
+mkinitcpio -P
+""
+
+mkinitcpio -P
+
+
+WATCH OUT FOR IF THEY PUT A / IN THEIR STRING FROM CUSTOMDIR
+format any other partitons from custom partition function
+mount --mkdir {custom partition} /mnt{customdir}
+genfstab -U /mnt > /mnt/etc/fstab
+
+
+tell them that they need to restart and go into the bios and enable setup mode and then run the setup script in the home dir then delete it
+
+
+
+
+things to look at:
+auto detecting gpu(amd nvidia, or none)
+auto deteciting cpu(intel, amd)
+auto detecting UEFI 
+validate partitions and a bunch of other validation
+reject custom mount points that are already gonna be in use
+error trapping (set -Eeuo pipefail)????
