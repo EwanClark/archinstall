@@ -91,14 +91,3 @@ genfstab -U /mnt > /mnt/etc/fstab
 
 
 tell them that they need to restart and go into the bios and enable setup mode and then run the setup script in the home dir then delete it
-
-
-
-
-things to look at:
-auto detecting gpu(amd nvidia, or none)
-auto deteciting cpu(intel, amd)
-auto detecting UEFI 
-validate partitions and a bunch of other validation
-reject custom mount points that are already gonna be in use
-error trapping (set -Eeuo pipefail)????
