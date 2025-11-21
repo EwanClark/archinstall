@@ -2,7 +2,7 @@
 timezone() {
   log_info "Setting timezone configuration"
   read -r -p "Press enter to see all available timezones" </dev/tty
-  timedatectl list-timezones </dev/tty >/dev/tty 2>&1
+  timedatectl list-timezones | less </dev/tty >/dev/tty 2>&1
   local timezone_input=""
   local resolved_timezone=""
   while true; do
@@ -67,7 +67,7 @@ keyboard_layout() {
   if [[ -z "$custom_keyboard_layout" || "$custom_keyboard_layout" == "y" || "$custom_keyboard_layout" == "yes" ]]; then
     log_info "Listing available keyboard layouts"
     read -r -p "Press enter to see all available keyboard layouts" </dev/tty
-    localectl list-keymaps </dev/tty >/dev/tty 2>&1
+    localectl list-keymaps | less </dev/tty >/dev/tty 2>&1
     local keyboard_layout_input=""
     local resolved_keymap=""
     while true; do
