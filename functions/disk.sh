@@ -22,6 +22,7 @@ declare -a additional_partition_entries=()
 boot_partition=""
 swap_partition=""
 root_partition=""
+boot_manager_partition=""
 
 is_reserved_mountpoint() {
   local candidate="$1"
@@ -329,6 +330,130 @@ mount_partitions() {
   mount $root_partition /mnt
   mount --mkdir $boot_partition /mnt/boot/efi
   swapon $swap_partition
+}
+
+select_boot_manager_partition() {
+  if [[ "${dual_boot:-false}" != "true" ]]; then
+    return
+  fi
+
+  log_blank
+  log_title "Boot Manager Partition for os-prober"
+  log_info "If you have another OS (e.g., Windows) installed, you can mount its boot partition"
+  log_info "so that os-prober can detect it and add it to the GRUB menu."
+  log_blank
+  
+  # Get all partitions from the selected disk
+  local -a partition_names=()
+  local -a partition_sizes=()
+  local -a partition_fstypes=()
+  declare -A partition_size_lookup=()
+  declare -A partition_fstype_lookup=()
+
+  mapfile -t partition_lines < <(lsblk -nP -p -o NAME,TYPE,SIZE,FSTYPE "$disk")
+
+  local line
+  for line in "${partition_lines[@]}"; do
+    eval "$line"
+    if [[ "$TYPE" != "part" ]]; then
+      unset NAME TYPE SIZE FSTYPE
+      continue
+    fi
+    partition_names+=("$NAME")
+    partition_sizes+=("$SIZE")
+    partition_fstypes+=("${FSTYPE:-unknown}")
+    partition_size_lookup["$NAME"]="$SIZE"
+    partition_fstype_lookup["$NAME"]="${FSTYPE:-unknown}"
+    unset NAME TYPE SIZE FSTYPE
+  done
+  
+  # Show all partitions except the ones already assigned
+  local -a available_for_boot_manager=()
+  local idx
+  for idx in "${!partition_names[@]}"; do
+    local candidate="${partition_names[$idx]}"
+    if [[ "$candidate" != "$boot_partition" && "$candidate" != "$swap_partition" && "$candidate" != "$root_partition" ]]; then
+      available_for_boot_manager+=("$candidate")
+    fi
+  done
+  
+  # Also check other disks for EFI partitions
+  log_info "Checking other disks for potential boot manager partitions..."
+  local -a all_disks=()
+  mapfile -t all_disks < <(lsblk -n -d -o NAME | grep -v "^${disk##*/}$")
+  
+  for other_disk in "${all_disks[@]}"; do
+    if [[ -b "/dev/$other_disk" ]]; then
+      local -a other_partitions=()
+      mapfile -t other_partitions < <(lsblk -nP -p -o NAME,TYPE,FSTYPE "/dev/$other_disk" | grep 'TYPE="part"' | grep -E 'FSTYPE="vfat"|FSTYPE="fat32"|FSTYPE="fat"' || true)
+      for part_line in "${other_partitions[@]}"; do
+        eval "$part_line"
+        if [[ -n "${NAME:-}" && "$NAME" != "$boot_partition" ]]; then
+          available_for_boot_manager+=("$NAME")
+          partition_size_lookup["$NAME"]="$(lsblk -n -d -o SIZE "/dev/$other_disk" 2>/dev/null || echo "unknown")"
+          partition_fstype_lookup["$NAME"]="${FSTYPE:-unknown}"
+        fi
+        unset NAME TYPE FSTYPE
+      done
+    fi
+  done
+  
+  if ((${#available_for_boot_manager[@]} > 0)); then
+    log_blank
+    log_info "Available partitions that could be boot manager partitions:"
+    local part_idx
+    for part_idx in "${!available_for_boot_manager[@]}"; do
+      local part="${available_for_boot_manager[$part_idx]}"
+      local part_size="${partition_size_lookup[$part]:-unknown}"
+      local part_fs="${partition_fstype_lookup[$part]:-unknown}"
+      # Get more accurate info if available
+      local part_info=$(lsblk -nP -p -o SIZE,FSTYPE "$part" 2>/dev/null || echo "")
+      if [[ -n "$part_info" ]]; then
+        eval "$part_info"
+        part_size="${SIZE:-$part_size}"
+        part_fs="${FSTYPE:-$part_fs}"
+        unset SIZE FSTYPE
+      fi
+      printf "  %2d) %s (%s, fs: %s)\n" $((part_idx + 1)) "$part" "$part_size" "$part_fs"
+    done
+    log_blank
+    
+    while true; do
+      read -r -p "Select a boot manager partition to mount [1-${#available_for_boot_manager[@]}] or press Enter to skip: " choice </dev/tty
+      if [[ -z "$choice" ]]; then
+        log_info "Skipping boot manager partition mount."
+        break
+      fi
+      if [[ "$choice" =~ ^[0-9]+$ ]]; then
+        local selected_idx=$((choice - 1))
+        if (( selected_idx < 0 || selected_idx >= ${#available_for_boot_manager[@]} )); then
+          log_warn "Please choose a number between 1 and ${#available_for_boot_manager[@]}."
+          continue
+        fi
+        boot_manager_partition="${available_for_boot_manager[$selected_idx]}"
+        log_success "Selected boot manager partition: $boot_manager_partition"
+        break
+      else
+        log_warn "Please enter a valid number or press Enter to skip."
+      fi
+    done
+  else
+    log_info "No additional partitions found that could be boot manager partitions."
+    log_info "If you have another OS, you may need to mount its boot partition manually."
+  fi
+}
+
+mount_boot_manager() {
+  if [[ -n "$boot_manager_partition" ]]; then
+    log_info "Mounting boot manager partition $boot_manager_partition for os-prober"
+    # Mount at /mnt/mnt/boot-manager so it's accessible from chroot at /mnt/boot-manager
+    mkdir -p /mnt/mnt/boot-manager
+    if mount "$boot_manager_partition" /mnt/mnt/boot-manager 2>/dev/null; then
+      log_success "Mounted boot manager partition at /mnt/mnt/boot-manager"
+    else
+      log_warn "Failed to mount boot manager partition. os-prober may not detect other OSes."
+    fi
+  fi
 }
 
 mount_additional_partitions() {
