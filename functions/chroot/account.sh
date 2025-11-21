@@ -1,7 +1,14 @@
 #! /bin/bash
 root_password() {
-  log_info "Enter new root password"
-  passwd </dev/tty >/dev/tty 2>&1
+  while true; do
+    log_info "Enter new root password"
+    if passwd </dev/tty >/dev/tty 2>&1; then
+      log_success "Root password set successfully"
+      break
+    else
+      log_error "Failed to set root password. Please try again."
+    fi
+  done
 }
 
 user_account() {
@@ -28,8 +35,16 @@ user_account() {
   done
 
   useradd -m -G wheel -s /bin/bash "$username"
-  log_info "Enter new password for $username"
-  passwd "$username" </dev/tty >/dev/tty 2>&1
+  
+  while true; do
+    log_info "Enter new password for $username"
+    if passwd "$username" </dev/tty >/dev/tty 2>&1; then
+      log_success "Password set successfully for $username"
+      break
+    else
+      log_error "Failed to set password. Please try again."
+    fi
+  done
   
   # Export username back to host system
   echo "$username" > /opt/archinstall/username.txt
@@ -45,6 +60,6 @@ sudoers() {
   else
       log_error "There was an error in the sudoers file. Restoring the backup."
       cp /etc/sudoers.bak /etc/sudoers
-      exit 1
+      return 1
   fi
 }
