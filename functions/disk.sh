@@ -337,9 +337,7 @@ mount_additional_partitions() {
     for entry in "${additional_partition_entries[@]}"; do
       IFS="|" read -r part_name fs mount_point mount_decision <<< "$entry"
       if [[ -n "$part_name" && -n "$fs" && "$mount_decision" == "yes" && -n "$mount_point" ]]; then
-        # Replace {homedir} placeholder with actual home directory
         local expanded_mount_point="${mount_point//\{homedir\}/\/home\/$username}"
-        # Mount with /mnt prefix since we're installing to /mnt
         mkdir -p "/mnt$expanded_mount_point"
         mount $part_name "/mnt$expanded_mount_point"
         log_success "Mounted $part_name at /mnt$expanded_mount_point"
