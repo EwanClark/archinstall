@@ -31,7 +31,7 @@ intel_or_amd_cpu() {
 # Ask if they want dual boot compatibility
 dual_boot_compatibility() {
   while true; do
-    read -r -p "Do you want dual boot compatibility? [Y/n]: " dual_boot_input
+    read -r -p "Do you want dual boot compatibility? [Y/n]: " dual_boot_input </dev/tty
     dual_boot_input="${dual_boot_input,,}"
     case "$dual_boot_input" in
       ""|"y"|"yes")
@@ -52,7 +52,7 @@ dual_boot_compatibility() {
 # Ask if they want secure boot compatibility
 secure_boot_compatibility() {
   while true; do
-    read -r -p "Do you want secure boot compatibility? [Y/n]: " secure_boot_input
+    read -r -p "Do you want secure boot compatibility? [Y/n]: " secure_boot_input </dev/tty
     secure_boot_input="${secure_boot_input,,}"
     case "$secure_boot_input" in
       ""|"y"|"yes")

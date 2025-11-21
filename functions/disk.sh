@@ -1,7 +1,7 @@
 #! /bin/bash
 select_disk() {
   lsblk -o NAME,SIZE,TYPE
-  read -r -p "Which disk would you like to use? " disk_input
+  read -r -p "Which disk would you like to use? " disk_input </dev/tty
   disk_input="${disk_input,,}"
   # Ensure disk is in /dev/$disk format
   if [[ "$disk_input" == /dev/* ]]; then
@@ -82,7 +82,7 @@ make_partitions() {
   log_info "5. Select 'Write' and type 'yes' to save changes"
   log_info "6. Select 'Quit' when done"
   log_blank
-  read -r -p "Press Enter when you're ready to open cfdisk..."
+  read -r -p "Press Enter when you're ready to open cfdisk..." </dev/tty
   
   cfdisk $disk
   
@@ -162,7 +162,7 @@ get_partitions() {
     local role_idx
     for role_idx in 0 1 2; do
       while true; do
-        read -r -p "Select the ${role_prompts[$role_idx]} [1-$total or 'back']: " choice
+        read -r -p "Select the ${role_prompts[$role_idx]} [1-$total or 'back']: " choice </dev/tty
         choice="${choice,,}"
         if [[ "$choice" == "back" || "$choice" == "b" ]]; then
           log_warn "Manual reassignment cancelled."
@@ -213,7 +213,7 @@ get_partitions() {
     log_info "Current lsblk output for $disk:"
     lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT "$disk"
     log_blank
-    read -r -p "Is this mapping correct? [Y]es / [C]hange / [P]artition again: " confirmation
+    read -r -p "Is this mapping correct? [Y]es / [C]hange / [P]artition again: " confirmation </dev/tty
     confirmation="${confirmation,,}"
     case "$confirmation" in
       ""|"y"|"yes")
@@ -254,7 +254,7 @@ get_partitions() {
   for entry in "${extra_partitions[@]}"; do
     IFS="|" read -r part_name part_size part_fstype <<< "$entry"
     while true; do
-      read -r -p "Include $part_name ($part_size, filesystem: ${part_fstype:-unknown})? [y/N]: " include_partition
+      read -r -p "Include $part_name ($part_size, filesystem: ${part_fstype:-unknown})? [y/N]: " include_partition </dev/tty
       include_partition="${include_partition,,}"
       if [[ -z "$include_partition" || "$include_partition" == "n" || "$include_partition" == "no" ]]; then
         log_info "Ignoring $part_name."
@@ -266,13 +266,13 @@ get_partitions() {
         local mount_decision=""
         local mount_point=""
         while true; do
-          read -r -p "Would you like to mount $part_name? [y/N]: " mount_decision
+          read -r -p "Would you like to mount $part_name? [y/N]: " mount_decision </dev/tty
           mount_decision="${mount_decision,,}"
           if [[ -z "$mount_decision" || "$mount_decision" == "n" || "$mount_decision" == "no" ]]; then
             break
           elif [[ "$mount_decision" == "y" || "$mount_decision" == "yes" ]]; then
             while true; do
-              read -r -p "Enter a mount point (use {homedir} to represent /home/\$username): " mount_point
+              read -r -p "Enter a mount point (use {homedir} to represent /home/\$username): " mount_point </dev/tty
               mount_point="${mount_point,,}"
               if [[ -z "$mount_point" ]]; then
                 log_warn "Mount point cannot be empty."

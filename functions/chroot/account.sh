@@ -9,7 +9,7 @@ user_account() {
   local username_input=""
   local username_regex='^[a-z_][a-z0-9_-]{0,31}$'
   while true; do
-    read -r -p "Enter new username: " username_input
+    read -r -p "Enter new username: " username_input </dev/tty
     username_input="${username_input,,}"
     if [[ -z "$username_input" ]]; then
       log_error "Username cannot be empty."
