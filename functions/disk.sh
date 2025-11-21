@@ -1,6 +1,8 @@
+#! /bin/bash
 select_disk() {
   lsblk -o NAME,SIZE,TYPE
-  read -p "Which disk would you like to use? " disk_input
+  read -r -p "Which disk would you like to use? " disk_input
+  disk_input="${disk_input,,}"
   # Ensure disk is in /dev/$disk format
   if [[ "$disk_input" == /dev/* ]]; then
     disk="$disk_input"
@@ -8,10 +10,10 @@ select_disk() {
     disk="/dev/$disk_input"
   fi
   if [[ ! -b "$disk" ]]; then
-    echo "Invalid disk. Please try again."
+    log_error "Invalid disk. Please try again."
     select_disk
   else
-    echo "Selected disk: $disk"
+    log_success "Selected disk: $disk"
   fi
 }
 
@@ -52,47 +54,42 @@ is_reserved_mountpoint() {
 }
 
 make_partitions() {  
-  echo ""
-  echo "=========================================="
-  echo "Partitioning Guide for $disk"
-  echo "=========================================="
-  echo ""
-  echo "You need to create the following partitions:"
-  echo ""
-  echo "1. EFI Boot Partition:"
-  echo "   - Size: 1 GiB"
-  echo "   - This is used to store the boot loader and will be mounted at /boot/efi"
-  echo ""
-  echo "2. Swap Partition:"
-  echo "   - Size: Equal to your RAM size"
-  echo "   - This is used to swap memory from RAM to disk when memory is full"
-  echo ""
-  echo "3. Root Partition (/):"
-  echo "   - Size: At least 20 GiB"
-  echo "   - This is your main filesystem and will be mounted at /"
-  echo ""
-  echo "4. (Optional) Make an Additional Partition: (\$homedir/Documents, etc.)"
-  echo "   - Size: Remaining space or as much as you want"
-  echo ""
-  
-  echo "=========================================="
-  echo "How to use cfdisk:"
-  echo "=========================================="
-  echo ""
-  echo "1. Use arrow keys to navigate"
-  echo "2. Select 'New' to create a partition"
-  echo "3. Enter the size (e.g., '512M' for 512 MiB, '30G' for 30 GiB)"
-  echo "5. Make sure to select 'Write' and type 'yes' to save changes"
-  echo "6. Select 'Quit' when done"
-  echo ""
-  read -p "Press Enter when you're ready to open cfdisk..."
+  log_blank
+  log_title "Partitioning Guide for $disk"
+  log_info "You need to create the following partitions:"
+  log_blank
+  log_info "1. EFI Boot Partition:"
+  log_info "   - Size: 1 GiB"
+  log_info "   - Stores the boot loader and will be mounted at /boot/efi"
+  log_blank
+  log_info "2. Swap Partition:"
+  log_info "   - Size: match your RAM"
+  log_info "   - Provides overflow space when memory is full"
+  log_blank
+  log_info "3. Root Partition (/):"
+  log_info "   - Size: at least 20 GiB"
+  log_info "   - Main filesystem mounted at /"
+  log_blank
+  log_info "4. (Optional) Additional partition (e.g. {homedir}/Documents)"
+  log_info "   - Size: remaining space or whatever you prefer"
+
+  log_blank
+  log_title "How to use cfdisk"
+  log_info "1. Use arrow keys to navigate"
+  log_info "2. Select 'New' to create a partition"
+  log_info "3. Enter the size (e.g., 512M for 512 MiB, 30G for 30 GiB)"
+  log_info "4. Select the type (EFI System for boot, Linux swap, Linux filesystem)"
+  log_info "5. Select 'Write' and type 'yes' to save changes"
+  log_info "6. Select 'Quit' when done"
+  log_blank
+  read -r -p "Press Enter when you're ready to open cfdisk..."
   
   cfdisk $disk
   
-  echo ""
-  echo "Partitioning complete! Showing current partition layout:"
+  log_blank
+  log_info "Partitioning complete! Current layout:"
   lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT $disk
-  echo ""
+  log_blank
 }
 
 get_partitions() {
@@ -125,8 +122,8 @@ get_partitions() {
   done
 
   if ((${#partition_names[@]} < 3)); then
-    echo "At least three partitions are required (boot, swap, root)."
-    echo "Launching the partition tool again so you can adjust the layout."
+    log_error "At least three partitions are required (boot, swap, root)."
+    log_info "Re-opening the partition tool so you can adjust the layout."
     make_partitions
     get_partitions
     return
@@ -146,8 +143,8 @@ get_partitions() {
   }
 
   manual_partition_assignment() {
-    echo ""
-    echo "Available partitions on $disk:"
+    log_blank
+    log_title "Available partitions on $disk"
     local idx
     for idx in "${!partition_names[@]}"; do
       printf "  %2d) %s (%s, fs: %s)\n" $((idx + 1)) "${partition_names[$idx]}" "${partition_sizes[$idx]}" "${partition_fstypes[$idx]}"
@@ -165,27 +162,27 @@ get_partitions() {
     local role_idx
     for role_idx in 0 1 2; do
       while true; do
-        read -p "Select the ${role_prompts[$role_idx]} [1-$total or 'back']: " choice
+        read -r -p "Select the ${role_prompts[$role_idx]} [1-$total or 'back']: " choice
         choice="${choice,,}"
         if [[ "$choice" == "back" || "$choice" == "b" ]]; then
-          echo "Manual reassignment cancelled."
+          log_warn "Manual reassignment cancelled."
           return 1
         fi
         if [[ "$choice" =~ ^[0-9]+$ ]]; then
           local selected_idx=$((choice - 1))
           if (( selected_idx < 0 || selected_idx >= total )); then
-            echo "Please choose a number between 1 and $total."
+            log_warn "Please choose a number between 1 and $total."
             continue
           fi
           if [[ -n "${used_indices[$selected_idx]}" ]]; then
-            echo "That partition has already been assigned."
+            log_warn "That partition has already been assigned."
             continue
           fi
           selections[$role_idx]=$selected_idx
           used_indices[$selected_idx]=1
           break
         fi
-        echo "Please enter a valid number or 'back'."
+        log_warn "Please enter a valid number or 'back'."
       done
     done
 
@@ -193,11 +190,11 @@ get_partitions() {
     swap_partition="${partition_names[${selections[1]}]}"
     root_partition="${partition_names[${selections[2]}]}"
     rebuild_extra_partitions
-    echo ""
-    echo "Updated partition mapping:"
-    echo "  EFI boot -> $boot_partition"
-    echo "  Swap      -> $swap_partition"
-    echo "  Root      -> $root_partition"
+    log_blank
+    log_title "Updated partition mapping"
+    log_info "  EFI boot -> $boot_partition"
+    log_info "  Swap      -> $swap_partition"
+    log_info "  Root      -> $root_partition"
     return 0
   }
 
@@ -207,16 +204,16 @@ get_partitions() {
   rebuild_extra_partitions
 
   while true; do
-    echo ""
-    echo "Guessing partitions based on order and expected sizes:"
-    echo "  Boot (≈1 GiB target): ${boot_partition:-unset} (${partition_size_lookup[$boot_partition]:-unknown})"
-    echo "  Swap (≈RAM target):   ${swap_partition:-unset} (${partition_size_lookup[$swap_partition]:-unknown})"
-    echo "  Root (≥20 GiB):       ${root_partition:-unset} (${partition_size_lookup[$root_partition]:-unknown})"
-    echo ""
-    echo "Current lsblk output for $disk:"
+    log_blank
+    log_title "Guessed partition mapping"
+    log_info "  Boot (≈1 GiB target): ${boot_partition:-unset} (${partition_size_lookup[$boot_partition]:-unknown})"
+    log_info "  Swap (≈RAM target):   ${swap_partition:-unset} (${partition_size_lookup[$swap_partition]:-unknown})"
+    log_info "  Root (≥20 GiB):       ${root_partition:-unset} (${partition_size_lookup[$root_partition]:-unknown})"
+    log_blank
+    log_info "Current lsblk output for $disk:"
     lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT "$disk"
-    echo ""
-    read -p "Is this mapping correct? [Y]es / [C]hange / [P]artition again: " confirmation
+    log_blank
+    read -r -p "Is this mapping correct? [Y]es / [C]hange / [P]artition again: " confirmation
     confirmation="${confirmation,,}"
     case "$confirmation" in
       ""|"y"|"yes")
@@ -226,82 +223,83 @@ get_partitions() {
         if manual_partition_assignment; then
           continue
         else
-          echo "No changes applied. Keeping the current mapping."
+          log_info "No changes applied. Keeping the current mapping."
           continue
         fi
         ;;
       "p"|"partition"|"back")
-        echo "Re-opening the partition tool so you can make changes."
+        log_info "Re-opening the partition tool so you can make changes."
         make_partitions
         get_partitions
         return
         ;;
       *)
-        echo "Please respond with 'y', 'c', or 'p'."
+        log_warn "Please respond with 'y', 'c', or 'p'."
         ;;
     esac
   done
 
-  echo "Detected the following partitions on $disk:"
-  echo "  EFI : $boot_partition"
-  echo "  Swap: $swap_partition"
-  echo "  Root: $root_partition"
+  log_title "Detected partitions on $disk"
+  log_info "  EFI : $boot_partition"
+  log_info "  Swap: $swap_partition"
+  log_info "  Root: $root_partition"
 
   if ((${#extra_partitions[@]} == 0)); then
     return
   fi
 
-  echo ""
-  echo "Additional partitions were found."
+  log_blank
+  log_title "Additional partitions detected"
   local entry
   for entry in "${extra_partitions[@]}"; do
     IFS="|" read -r part_name part_size part_fstype <<< "$entry"
     while true; do
-      read -p "Include $part_name ($part_size, filesystem: ${part_fstype:-unknown})? [y/N]: " include_partition
+      read -r -p "Include $part_name ($part_size, filesystem: ${part_fstype:-unknown})? [y/N]: " include_partition
       include_partition="${include_partition,,}"
       if [[ -z "$include_partition" || "$include_partition" == "n" || "$include_partition" == "no" ]]; then
-        echo "Ignoring $part_name."
+        log_info "Ignoring $part_name."
         break
       elif [[ "$include_partition" == "y" || "$include_partition" == "yes" ]]; then
         local fs="ext4"
-        echo "$part_name will be formatted as $fs."
+        log_info "$part_name will be formatted as $fs."
 
         local mount_decision=""
         local mount_point=""
         while true; do
-          read -p "Would you like to mount $part_name? [y/N]: " mount_decision
+          read -r -p "Would you like to mount $part_name? [y/N]: " mount_decision
           mount_decision="${mount_decision,,}"
           if [[ -z "$mount_decision" || "$mount_decision" == "n" || "$mount_decision" == "no" ]]; then
             break
           elif [[ "$mount_decision" == "y" || "$mount_decision" == "yes" ]]; then
             while true; do
-              read -p "Enter a mount point (use {homedir} to represent /home/\$username): " mount_point
+              read -r -p "Enter a mount point (use {homedir} to represent /home/\$username): " mount_point
+              mount_point="${mount_point,,}"
               if [[ -z "$mount_point" ]]; then
-                echo "Mount point cannot be empty."
+                log_warn "Mount point cannot be empty."
                 continue
               fi
               if [[ "$mount_point" != \{homedir\}* && "$mount_point" != /* ]]; then
-                echo "Mount points must start with '/' or '{homedir}'."
+                log_warn "Mount points must start with '/' or '{homedir}'."
                 continue
               fi
               local validation_target="$mount_point"
               validation_target="${validation_target//\{homedir\}/\/home\/\$username}"
               if is_reserved_mountpoint "$validation_target"; then
-                echo "That path already exists in the base system. Choose another directory."
+                log_warn "That path already exists in the base system. Choose another directory."
                 continue
               fi
               break
             done
             break
           else
-            echo "Please answer yes or no."
+            log_warn "Please answer yes or no."
           fi
         done
 
         additional_partition_entries+=("$part_name|$fs|$mount_point|${mount_decision:-no}")
         break
       else
-        echo "Please answer yes or no."
+        log_warn "Please answer yes or no."
       fi
     done
   done
@@ -335,8 +333,17 @@ mount_additional_partitions() {
     for entry in "${additional_partition_entries[@]}"; do
       IFS="|" read -r part_name fs mount_point mount_decision <<< "$entry"
       if [[ -n "$part_name" && -n "$fs" && "$mount_decision" == "yes" && -n "$mount_point" ]]; then
-        mount $part_name $mount_point
+        # Replace {homedir} placeholder with actual home directory
+        local expanded_mount_point="${mount_point//\{homedir\}/\/home\/$username}"
+        # Mount with /mnt prefix since we're installing to /mnt
+        mkdir -p "/mnt$expanded_mount_point"
+        mount $part_name "/mnt$expanded_mount_point"
+        log_success "Mounted $part_name at /mnt$expanded_mount_point"
       fi
     done
   fi
+}
+
+create_fstab() {
+  genfstab -U /mnt > /mnt/etc/fstab
 }

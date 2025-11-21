@@ -1,7 +1,8 @@
+#! /bin/bash
 function check_compatibility() {
   if [[ ! -d /sys/firmware/efi ]]; then
     # System is not UEFI, failed compatibility
-    echo "System is not UEFI, this script only supports UEFI systems."
+    log_error "System is not UEFI, this script only supports UEFI systems."
     return 1
   fi
 
@@ -13,6 +14,7 @@ function check_compatibility() {
 # NVIDIA or AMD or Intel GPU
 nvidia_or_amd_or_intel_gpu() {
   if [[ $(grep -c "NVIDIA" /proc/cpuinfo) -gt 0 ]]; then
+    nvidia=true
     return 0
   fi
   return 1
@@ -28,10 +30,42 @@ intel_or_amd_cpu() {
 
 # Ask if they want dual boot compatibility
 dual_boot_compatibility() {
-  read -p "Do you want dual boot compatibility? [Y/n]: " dual_boot_compatibility
-  dual_boot_compatibility="${dual_boot_compatibility,,}"
-  if [[ -z "$dual_boot_compatibility" || "$dual_boot_compatibility" == "y" || "$dual_boot_compatibility" == "yes" ]]; then
-    return 0
-  fi
-  return 1
+  while true; do
+    read -r -p "Do you want dual boot compatibility? [Y/n]: " dual_boot_input
+    dual_boot_input="${dual_boot_input,,}"
+    case "$dual_boot_input" in
+      ""|"y"|"yes")
+        dual_boot=true
+        return 0
+        ;;
+      "n"|"no")
+        dual_boot=false
+        return 1
+        ;;
+      *)
+      log_warn "Please answer yes or no."
+        ;;
+    esac
+  done
+}
+
+# Ask if they want secure boot compatibility
+secure_boot_compatibility() {
+  while true; do
+    read -r -p "Do you want secure boot compatibility? [Y/n]: " secure_boot_input
+    secure_boot_input="${secure_boot_input,,}"
+    case "$secure_boot_input" in
+      ""|"y"|"yes")
+        secure_boot=true
+        return 0
+        ;;
+      "n"|"no")
+        secure_boot=false
+        return 1
+        ;;
+      *)
+      log_warn "Please answer yes or no."
+        ;;
+    esac
+  done
 }

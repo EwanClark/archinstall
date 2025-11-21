@@ -1,4 +1,4 @@
-source compatibility.sh
+#! /bin/bash
 
 # Base packages
 packages=(
@@ -42,6 +42,10 @@ dual_boot_packages=(
   os-prober
 )
 
+secure_boot_packages=(
+  sbctl
+)
+
 detect_packages() {
   if nvidia_or_amd_or_intel_gpu; then
     packages+=("${nvidia_gpu_packages[@]}")
@@ -57,6 +61,10 @@ detect_packages() {
 
   if dual_boot_compatibility; then
     packages+=("${dual_boot_packages[@]}")
+  fi
+
+  if secure_boot_compatibility; then
+    packages+=("${secure_boot_packages[@]}")
   fi
 }
 
