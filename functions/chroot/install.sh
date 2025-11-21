@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -Euo pipefail
+set -Eeuo pipefail
 
 # Source all required chroot functions
 source /tmp/chroot_functions/logging.sh
