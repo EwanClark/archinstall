@@ -48,30 +48,23 @@ secure_boot_packages=(
 )
 
 detect_packages() {
-  detect_gpu_vendor
-  detect_cpu_vendor
-  ensure_detection_defaults
-  ensure_boot_option_selections
-
-  review_system_detection
-
-  if [[ "$selected_gpu_profile" == "nvidia" ]]; then
+  if nvidia_or_amd_or_intel_gpu; then
     packages+=("${nvidia_gpu_packages[@]}")
   else
     packages+=("${amd_intel_gpu_packages[@]}")
   fi
 
-  if [[ "$selected_cpu_microcode" == "intel" ]]; then
+  if intel_or_amd_cpu; then
     packages+=("${intel_cpu_packages[@]}")
   else
     packages+=("${amd_cpu_packages[@]}")
   fi
 
-  if [[ "${dual_boot:-false}" == "true" ]]; then
+  if dual_boot_compatibility; then
     packages+=("${dual_boot_packages[@]}")
   fi
 
-  if [[ "${secure_boot:-false}" == "true" ]]; then
+  if secure_boot_compatibility; then
     packages+=("${secure_boot_packages[@]}")
   fi
 }
