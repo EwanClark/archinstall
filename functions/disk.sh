@@ -104,7 +104,7 @@ get_partitions() {
   declare -A partition_size_lookup=()
   declare -A partition_fstype_lookup=()
 
-  mapfile -t partition_lines < <(lsblk -lnP -p -o NAME,TYPE,SIZE,FSTYPE "$disk")
+  mapfile -t partition_lines < <(lsblk -nP -p -o NAME,TYPE,SIZE,FSTYPE "$disk")
 
   local line
   for line in "${partition_lines[@]}"; do
