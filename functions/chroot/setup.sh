@@ -23,7 +23,7 @@ EOF
 }
 
 execute_chroot_install() {
-  arch-chroot /mnt /bin/bash /tmp/chroot_install.sh
+  arch-chroot /mnt /tmp/chroot_install.sh
   
   # Import username from chroot environment
   if [[ -f /mnt/tmp/username.txt ]]; then
