@@ -1,5 +1,4 @@
 #! /bin/bash
-source chroot/account.sh
 
 # NEED TO ADD CHECKS TO MAKE SURE SURE THE SCRIPT FAILS IF ANY COMMANDS FAIL!!!!!!!!!
 secure_boot_script="
