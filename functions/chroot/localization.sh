@@ -27,7 +27,7 @@ locale() {
   custom_locale="${custom_locale,,}"
   if [[ -z "$custom_locale" || "$custom_locale" == "y" || "$custom_locale" == "yes" ]]; then
     read -r -p "Press enter to be taken to the file to uncomment the locale you want to use" </dev/tty
-    nano /etc/locale.gen
+    nano /etc/locale.gen </dev/tty >/dev/tty 2>&1
     read -r -p "Have you uncommented the locale you want to use? [Y/n]: " uncommented_locale </dev/tty
     uncommented_locale="${uncommented_locale,,}"
     if [[ "$uncommented_locale" == "n" || "$uncommented_locale" == "no" ]]; then

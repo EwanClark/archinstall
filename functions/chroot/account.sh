@@ -1,7 +1,7 @@
 #! /bin/bash
 root_password() {
   log_info "Enter new root password"
-  passwd
+  passwd </dev/tty >/dev/tty 2>&1
 }
 
 user_account() {
@@ -29,7 +29,7 @@ user_account() {
 
   useradd -m -G wheel -s /bin/bash "$username"
   log_info "Enter new password for $username"
-  passwd "$username"
+  passwd "$username" </dev/tty >/dev/tty 2>&1
   
   # Export username back to host system
   echo "$username" > /tmp/username.txt

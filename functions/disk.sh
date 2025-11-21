@@ -84,7 +84,7 @@ make_partitions() {
   log_blank
   read -r -p "Press Enter when you're ready to open cfdisk..." </dev/tty
   
-  cfdisk $disk
+  cfdisk $disk </dev/tty >/dev/tty 2>&1
   
   log_blank
   log_info "Partitioning complete! Current layout:"
