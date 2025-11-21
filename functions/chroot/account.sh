@@ -32,7 +32,7 @@ user_account() {
   passwd "$username" </dev/tty >/dev/tty 2>&1
   
   # Export username back to host system
-  echo "$username" > /tmp/username.txt
+  echo "$username" > /opt/archinstall/username.txt
 }
 
 sudoers() {

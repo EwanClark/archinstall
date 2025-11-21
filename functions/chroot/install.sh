@@ -3,16 +3,16 @@
 set -Eeuo pipefail
 
 # Source all required chroot functions
-source /tmp/chroot_functions/logging.sh
-source /tmp/chroot_functions/account.sh
-source /tmp/chroot_functions/grub.sh
-source /tmp/chroot_functions/localization.sh
-source /tmp/chroot_functions/nvidia.sh
-source /tmp/chroot_functions/services.sh
-source /tmp/chroot_functions/compatibility.sh
+source /opt/archinstall/chroot_functions/logging.sh
+source /opt/archinstall/chroot_functions/account.sh
+source /opt/archinstall/chroot_functions/grub.sh
+source /opt/archinstall/chroot_functions/localization.sh
+source /opt/archinstall/chroot_functions/nvidia.sh
+source /opt/archinstall/chroot_functions/services.sh
+source /opt/archinstall/chroot_functions/compatibility.sh
 
 # Import variables from host environment
-source /tmp/chroot_vars.sh
+source /opt/archinstall/chroot_vars.sh
 
 # Execute chroot functions in order
 log_step "Setting root password"
@@ -47,9 +47,7 @@ grub
 
 # Clean up temporary files
 log_step "Cleaning up"
-rm -rf /tmp/chroot_functions
-rm -f /tmp/chroot_vars.sh
-rm -f /tmp/chroot_install.sh
+rm -rf /opt/archinstall
 
 log_step "Chroot configuration complete!"
 

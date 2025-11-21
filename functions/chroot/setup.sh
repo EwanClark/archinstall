@@ -2,19 +2,19 @@
 
 setup_chroot() {
   # Create temporary directory structure
-  mkdir -p /mnt/tmp/chroot_functions
+  mkdir -p /mnt/opt/archinstall/chroot_functions
   
   # Copy all chroot function files
-  cp functions/chroot/*.sh /mnt/tmp/chroot_functions/
-  cp functions/compatibility.sh /mnt/tmp/chroot_functions/
-  cp functions/logging.sh /mnt/tmp/chroot_functions/
+  cp functions/chroot/*.sh /mnt/opt/archinstall/chroot_functions/
+  cp functions/compatibility.sh /mnt/opt/archinstall/chroot_functions/
+  cp functions/logging.sh /mnt/opt/archinstall/chroot_functions/
   
   # Copy the main chroot install script
-  cp functions/chroot/install.sh /mnt/tmp/chroot_install.sh
-  chmod +x /mnt/tmp/chroot_install.sh
+  cp functions/chroot/install.sh /mnt/opt/archinstall/chroot_install.sh
+  chmod +x /mnt/opt/archinstall/chroot_install.sh
   
   # Export variables needed in chroot environment
-  cat > /mnt/tmp/chroot_vars.sh << EOF
+  cat > /mnt/opt/archinstall/chroot_vars.sh << EOF
 export boot_partition="${boot_partition:-}"
 export has_nvidia="${nvidia:-false}"
 export dual_boot="${dual_boot:-false}"
@@ -23,11 +23,11 @@ EOF
 }
 
 execute_chroot_install() {
-  arch-chroot /mnt /tmp/chroot_install.sh
+  arch-chroot /mnt /opt/archinstall/chroot_install.sh
   
   # Import username from chroot environment
-  if [[ -f /mnt/tmp/username.txt ]]; then
-    username=$(cat /mnt/tmp/username.txt)
-    rm /mnt/tmp/username.txt
+  if [[ -f /mnt/opt/archinstall/username.txt ]]; then
+    username=$(cat /mnt/opt/archinstall/username.txt)
+    rm /mnt/opt/archinstall/username.txt
   fi
 }
