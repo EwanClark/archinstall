@@ -1,5 +1,5 @@
 #! /bin/bash
-set -Eeuo pipefail
+set -Euo pipefail
 
 source functions/logging.sh
 source functions/compatibility.sh
