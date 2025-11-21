@@ -11,9 +11,9 @@ function check_compatibility() {
 }
 
 
-# NVIDIA or AMD or Intel GPU
+# NVIDIA GPU detection
 nvidia_or_amd_or_intel_gpu() {
-  if [[ $(grep -c "NVIDIA" /proc/cpuinfo) -gt 0 ]]; then
+  if lspci | grep -i "vga\|3d\|display" | grep -qi "nvidia"; then
     nvidia=true
     return 0
   fi
