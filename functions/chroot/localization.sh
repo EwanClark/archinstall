@@ -2,7 +2,7 @@
 timezone() {
   log_info "Setting timezone configuration"
   read -r -p "Press enter to see all available timezones" </dev/tty
-  timedatectl list-timezones
+  timedatectl list-timezones | less
   local timezone_input=""
   local resolved_timezone=""
   while true; do
