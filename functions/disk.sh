@@ -86,6 +86,10 @@ make_partitions() {
   
   cfdisk $disk </dev/tty >/dev/tty 2>&1
   
+  # Force kernel to re-read partition table
+  partprobe $disk
+  sleep 1
+  
   log_blank
   log_info "Partitioning complete! Current layout:"
   lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT $disk
