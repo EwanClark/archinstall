@@ -33,6 +33,9 @@ locale
 log_step "Setting hostname"
 hostname
 
+log_step "Setting keyboard layout"
+keyboard_layout
+
 log_step "Enabling services"
 enable_services
 
