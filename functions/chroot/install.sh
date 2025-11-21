@@ -40,7 +40,7 @@ log_step "Enabling services"
 enable_services
 
 # Check if NVIDIA configuration is needed
-if [[ $has_nvidia ]]; then
+if [[ "${has_nvidia}" == "true" ]]; then
   log_step "Configuring NVIDIA"
   nvidia
 fi

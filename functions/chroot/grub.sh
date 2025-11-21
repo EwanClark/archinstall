@@ -5,10 +5,10 @@ secure_boot_modules="
 "
 
 grub() {
-  if [[ $dual_boot ]]; then
+  if [[ "${dual_boot}" == "true" ]]; then
     sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
   fi
-  if [[ $secure_boot ]]; then
+  if [[ "${secure_boot}" == "true" ]]; then
     grub-install $boot_partition --efi-directory=/boot/efi --disable-shim-lock --modules="$secure_boot_modules"
   else
     grub-install $boot_partition --efi-directory=/boot/efi
