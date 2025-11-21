@@ -94,10 +94,10 @@ ensure_detection_defaults() {
 
 ensure_boot_option_selections() {
   if [[ -z "${dual_boot:-}" ]]; then
-    dual_boot_compatibility
+    dual_boot_compatibility || true
   fi
   if [[ -z "${secure_boot:-}" ]]; then
-    secure_boot_compatibility
+    secure_boot_compatibility || true
   fi
 }
 
