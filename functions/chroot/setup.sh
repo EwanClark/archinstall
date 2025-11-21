@@ -15,10 +15,10 @@ setup_chroot() {
   
   # Export variables needed in chroot environment
   cat > /mnt/tmp/chroot_vars.sh << EOF
-export boot_partition="$boot_partition"
-export has_nvidia="$nvidia"
-export dual_boot="$dual_boot"
-export secure_boot="$secure_boot"
+export boot_partition="${boot_partition:-}"
+export has_nvidia="${nvidia:-false}"
+export dual_boot="${dual_boot:-false}"
+export secure_boot="${secure_boot:-false}"
 EOF
 }
 
