@@ -1,112 +1,13 @@
 #! /bin/bash
 
-interactive_timezone_browser() {
-  local -n _timezones_ref=$1
-  local tty="/dev/tty"
-  local page_size=20
-  local page=0
-  local selection=""
-  local -a active_indices=("${!_timezones_ref[@]}")
-
-  if (( ${#_timezones_ref[@]} == 0 )); then
-    printf "No timezone data available to display.\n" >"$tty"
-    return 1
+if ! declare -F interactive_list_browser >/dev/null 2>&1; then
+  _localization_dir="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [[ -f "${_localization_dir}/../browser.sh" ]]; then
+    # shellcheck source=../browser.sh
+    source "${_localization_dir}/../browser.sh"
   fi
-
-  while true; do
-    local total_active=${#active_indices[@]}
-    if (( total_active == 0 )); then
-      printf "\nNo matches found. Use 'r' to reset or 'q' to quit.\n" >"$tty"
-    else
-      local start=$((page * page_size))
-      if (( start >= total_active )); then
-        page=0
-        start=0
-      fi
-      local end=$((start + page_size))
-      if (( end > total_active )); then
-        end=$total_active
-      fi
-      printf "\nShowing timezones %d-%d of %d (of %d total)\n" $((start + 1)) $end $total_active ${#_timezones_ref[@]} >"$tty"
-      for ((i=start; i<end; i++)); do
-        local idx=${active_indices[i]}
-        printf "%4d) %s\n" $((idx + 1)) "${_timezones_ref[idx]}" >"$tty"
-      done
-      printf "Type the number beside a timezone or enter the exact timezone text to select it.\n" >"$tty"
-    fi
-    printf "\nOptions: [Enter/n] next  [p] prev  [s] search  [r] reset  [q] quit  [number/text] select\n" >"$tty"
-    read -r -p "Choice: " choice </dev/tty
-    if [[ -z "$choice" ]]; then
-      choice="n"
-    fi
-    case "$choice" in
-      n|N)
-        if (( total_active > 0 && (page + 1) * page_size < total_active )); then
-          ((page++))
-        else
-          page=0
-        fi
-        ;;
-      p|P)
-        if (( page > 0 )); then
-          ((page--))
-        else
-          page=$(( (total_active + page_size - 1) / page_size - 1 ))
-          if (( page < 0 )); then
-            page=0
-          fi
-        fi
-        ;;
-      s|S)
-        read -r -p "Search term (case-insensitive): " term </dev/tty
-        term="${term,,}"
-        active_indices=()
-        if [[ -z "$term" ]]; then
-          active_indices=("${!_timezones_ref[@]}")
-        else
-          for idx in "${!_timezones_ref[@]}"; do
-            if [[ "${_timezones_ref[idx],,}" == *"$term"* ]]; then
-              active_indices+=("$idx")
-            fi
-          done
-        fi
-        page=0
-        ;;
-      r|R)
-        active_indices=("${!_timezones_ref[@]}")
-        page=0
-        ;;
-      q|Q)
-        break
-        ;;
-      *)
-        if [[ "$choice" =~ ^[0-9]+$ ]]; then
-          local num=$choice
-          if (( num >= 1 && num <= ${#_timezones_ref[@]} )); then
-            selection="${_timezones_ref[num-1]}"
-            printf "Selected timezone: %s\n" "$selection" >"$tty"
-            printf "%s" "$selection"
-            return 0
-          fi
-          printf "Number outside valid range.\n" >"$tty"
-        else
-          local lowered_choice="${choice,,}"
-          for tz in "${_timezones_ref[@]}"; do
-            if [[ "${tz,,}" == "$lowered_choice" ]]; then
-              selection="$tz"
-              printf "Selected timezone: %s\n" "$selection" >"$tty"
-              printf "%s" "$selection"
-              return 0
-            fi
-          done
-          printf "Unknown option. Enter an on-screen number or the exact timezone text.\n" >"$tty"
-        fi
-        ;;
-    esac
-  done
-
-  return 1
-}
+  unset _localization_dir
+fi
 
 timezone() {
   log_info "Setting timezone configuration"
@@ -127,7 +28,7 @@ timezone() {
   read -r -p "Would you like to browse available timezones first? [Y/n]: " browse_choice </dev/tty
   browse_choice="${browse_choice,,}"
   if [[ "$browse_choice" != "n" && "$browse_choice" != "no" ]]; then
-    browse_selection=$(interactive_timezone_browser available_timezones)
+    browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
     if [[ -n "$browse_selection" ]]; then
       timezone_input="$browse_selection"
     fi
@@ -142,7 +43,7 @@ timezone() {
       continue
     fi
     if [[ "${timezone_input,,}" == "list" ]]; then
-      browse_selection=$(interactive_timezone_browser available_timezones)
+      browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
       timezone_input="$browse_selection"
       continue
     fi
@@ -158,7 +59,7 @@ timezone() {
       read -r -p "Would you like to browse the timezone list? [Y/n]: " browse_retry </dev/tty
       browse_retry="${browse_retry,,}"
       if [[ "$browse_retry" != "n" && "$browse_retry" != "no" ]]; then
-        browse_selection=$(interactive_timezone_browser available_timezones)
+        browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
         timezone_input="$browse_selection"
       else
         timezone_input=""
@@ -214,23 +115,65 @@ keyboard_layout() {
   read -r -p "Would you like to set a custom keyboard layout (default is us) [y/N]: " custom_keyboard_layout </dev/tty
   custom_keyboard_layout="${custom_keyboard_layout,,}"
   if [[ "$custom_keyboard_layout" == "y" || "$custom_keyboard_layout" == "yes" ]]; then
-    log_info "Listing available keyboard layouts"
-    read -r -p "Press enter to see all available keyboard layouts" </dev/tty
-    localectl list-keymaps | less </dev/tty >/dev/tty 2>&1
+    log_info "Configuring keyboard layout"
+    local -a available_keymaps=()
+    if ! mapfile -t available_keymaps < <(localectl list-keymaps); then
+      log_error "Failed to retrieve keyboard layouts from localectl."
+      return 1
+    fi
+    if (( ${#available_keymaps[@]} == 0 )); then
+      log_error "No keyboard layouts were returned by localectl."
+      return 1
+    fi
+
     local keyboard_layout_input=""
     local resolved_keymap=""
+    local browse_selection=""
+
+    read -r -p "Would you like to browse available keyboard layouts first? [Y/n]: " browse_choice </dev/tty
+    browse_choice="${browse_choice,,}"
+    if [[ "$browse_choice" != "n" && "$browse_choice" != "no" ]]; then
+      browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
+      if [[ -n "$browse_selection" ]]; then
+        keyboard_layout_input="$browse_selection"
+      fi
+    fi
+
     while true; do
-      read -r -p "Enter your keyboard layout (e.g. us, de, fr): " keyboard_layout_input </dev/tty
-      keyboard_layout_input="${keyboard_layout_input,,}"
+      if [[ -z "$keyboard_layout_input" ]]; then
+        read -r -p "Enter your keyboard layout (type 'list' to browse): " keyboard_layout_input </dev/tty
+      fi
       if [[ -z "$keyboard_layout_input" ]]; then
         log_error "Keyboard layout cannot be empty."
         continue
       fi
-      resolved_keymap=$(localectl list-keymaps | awk -v target="$keyboard_layout_input" 'tolower($0)==tolower(target) {print $0; exit}')
-      if [[ -z "$resolved_keymap" ]]; then
-        log_error "Invalid keyboard layout. Please try again."
+      if [[ "${keyboard_layout_input,,}" == "list" ]]; then
+        browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
+        keyboard_layout_input="$browse_selection"
         continue
       fi
+
+      resolved_keymap=""
+      for keymap in "${available_keymaps[@]}"; do
+        if [[ "${keymap,,}" == "${keyboard_layout_input,,}" ]]; then
+          resolved_keymap="$keymap"
+          break
+        fi
+      done
+
+      if [[ -z "$resolved_keymap" ]]; then
+        log_error "Invalid keyboard layout. Please try again."
+        read -r -p "Would you like to browse the keyboard layouts? [Y/n]: " browse_retry </dev/tty
+        browse_retry="${browse_retry,,}"
+        if [[ "$browse_retry" != "n" && "$browse_retry" != "no" ]]; then
+          browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
+          keyboard_layout_input="$browse_selection"
+        else
+          keyboard_layout_input=""
+        fi
+        continue
+      fi
+
       echo "KEYMAP=$resolved_keymap" > /etc/vconsole.conf
       break
     done

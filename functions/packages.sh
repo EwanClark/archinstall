@@ -13,7 +13,6 @@ packages=(
   networkmanager
   nano
   git
-  less
 )
 
 # NVIDIA GPU packages
