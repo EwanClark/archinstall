@@ -1,5 +1,4 @@
 finalizing() {
-  mkinitcpio -P
   log_step "Installation complete!"
   if [[ "${secure_boot:-false}" == "true" ]]; then
     secure_boot_info
