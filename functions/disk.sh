@@ -243,10 +243,23 @@ get_partitions() {
       fi
     done
 
+    print_filtered_lsblk() {
+      log_info "Current block devices (excluding assigned Arch partitions):"
+      printf "  %-22s %-8s %-6s %-10s %s\n" "NAME" "SIZE" "TYPE" "FSTYPE" "MOUNTPOINT"
+      while IFS= read -r device_line; do
+        eval "$device_line"
+        if [[ "$TYPE" == "part" && -n "${used_partitions[$NAME]}" ]]; then
+          unset NAME SIZE TYPE FSTYPE MOUNTPOINT
+          continue
+        fi
+        printf "  %-22s %-8s %-6s %-10s %s\n" "$NAME" "${SIZE:-unknown}" "${TYPE:-?}" "${FSTYPE:-unknown}" "${MOUNTPOINT:--}"
+        unset NAME SIZE TYPE FSTYPE MOUNTPOINT
+      done < <(lsblk -nP -p -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT)
+    }
+
     while true; do
       log_blank
-      log_info "Current block devices:"
-      lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
+      print_filtered_lsblk
       read -r -p "Partition to include (blank/'no' to finish): " partition_choice </dev/tty
       partition_choice="${partition_choice//[$'\t\r\n ']}"
       local normalized_choice="${partition_choice,,}"
