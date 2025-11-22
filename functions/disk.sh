@@ -71,7 +71,7 @@ make_partitions() {
   log_info "   - Size: at least 20 GiB"
   log_info "   - Main filesystem mounted at /"
   log_blank
-  log_info "4. (Optional) Additional partition (e.g. {homedir}/Documents)"
+  log_info "4. (Optional) Additional partition (e.g. {home}/Documents)"
   log_info "   - Size: remaining space or whatever you prefer"
 
   log_blank
@@ -379,19 +379,19 @@ get_partitions() {
       local should_mount="no"
       local mount_point=""
       while true; do
-        read -r -p "Where should $target_partition be mounted? (use {homedir} for /home/\$username, Enter or 'no' to skip): " mount_point </dev/tty
+        read -r -p "Where should $target_partition be mounted? (use {home} for /home/\$username, Enter or 'no' to skip): " mount_point </dev/tty
         mount_point="${mount_point,,}"
         if [[ -z "$mount_point" || "$mount_point" == "no" ]]; then
           should_mount="no"
           mount_point=""
           break
         fi
-        if [[ "$mount_point" != \{homedir\}* && "$mount_point" != /* ]]; then
-          log_warn "Mount points must start with '/' or '{homedir}'."
+        if [[ "$mount_point" != \{home\}* && "$mount_point" != /* ]]; then
+          log_warn "Mount points must start with '/' or '{home}'."
           continue
         fi
         local validation_target="$mount_point"
-        validation_target="${validation_target//\{homedir\}/\/home\/\$username}"
+        validation_target="${validation_target//\{home\}/\/home\/\$username}"
         if is_reserved_mountpoint "$validation_target"; then
           log_warn "That path already exists in the base system. Choose another directory."
           continue
@@ -482,7 +482,7 @@ mount_additional_partitions() {
     for entry in "${additional_partition_entries[@]}"; do
       IFS="|" read -r part_name fs mount_point mount_decision <<< "$entry"
       if [[ -n "$part_name" && -n "$fs" && "$mount_decision" == "yes" && -n "$mount_point" ]]; then
-        local expanded_mount_point="${mount_point//\{homedir\}/\/home\/$username}"
+        local expanded_mount_point="${mount_point//\{home\}/\/home\/$username}"
         mkdir -p "/mnt$expanded_mount_point"
         mount $part_name "/mnt$expanded_mount_point"
         log_success "Mounted $part_name at /mnt$expanded_mount_point"
