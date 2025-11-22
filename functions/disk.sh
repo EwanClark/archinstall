@@ -297,7 +297,7 @@ get_partitions() {
         printf "  %s (%s disk)\n" "$disk" "$disk_size"
         printed_any=1
 
-        local child_list="${disk_children[$disk]}"
+        local child_list="${disk_children[$disk]-}"
         local -a visible_children=()
         local child
         for child in $child_list; do
