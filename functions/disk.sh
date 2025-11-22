@@ -245,7 +245,7 @@ get_partitions() {
 
     print_filtered_lsblk() {
       log_info "Current block devices (excluding assigned Arch partitions):"
-      printf "  %-22s %-8s %-6s %-10s %s\n" "NAME" "SIZE" "TYPE" "FSTYPE" "MOUNTPOINT"
+      printf "  %-22s %-8s %-10s %s\n" "NAME" "SIZE" "FSTYPE" "MOUNTPOINT"
 
       declare -A node_size=()
       declare -A node_type=()
@@ -318,14 +318,9 @@ get_partitions() {
           continue
         fi
 
-        local idx
-        for idx in "${!visible_children[@]}"; do
-          child="${visible_children[$idx]}"
-          local marker="|-"
-          if (( idx == ${#visible_children[@]} - 1 )); then
-            marker="\\-"
-          fi
-          printf "    %s %-18s %-8s %-6s %-10s %s\n" "$marker" "$child" "${node_size[$child]:-unknown}" "${node_type[$child]:-?}" "${node_fs[$child]:-unknown}" "${node_mount[$child]:--}"
+        local child
+        for child in "${visible_children[@]}"; do
+          printf "    | %-18s %-8s %-10s %s\n" "$child" "${node_size[$child]:-unknown}" "${node_fs[$child]:-unknown}" "${node_mount[$child]:--}"
         done
       done
 
