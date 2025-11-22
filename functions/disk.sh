@@ -45,7 +45,6 @@ is_reserved_mountpoint() {
     "/usr"
   )
   local -a exact_only_paths=(
-    "/home"
     "/mnt"
     "/opt"
     "/srv"
