@@ -76,12 +76,13 @@ make_partitions() {
 
   log_blank
   log_title "How to use cfdisk"
-  log_info "1. Use arrow keys to navigate"
-  log_info "2. Select 'New' to create a partition"
-  log_info "3. Enter the size (e.g., 512M for 512 MiB, 30G for 30 GiB)"
-  log_info "4. Select the type (EFI System for boot, Linux swap, Linux filesystem)"
-  log_info "5. Select 'Write' and type 'yes' to save changes"
-  log_info "6. Select 'Quit' when done"
+  log_info "1. Cfdisk may ask for a partition table type, pick GPT. This prompt may not appear."
+  log_info "2. Use arrow keys to navigate"
+  log_info "3. Select 'New' to create a partition"
+  log_info "4. Enter the size (e.g., 512M for 512 MiB, 30G for 30 GiB)"
+  log_info "5. Select the type (EFI System for boot, Linux swap, Linux filesystem)"
+  log_info "6. Select 'Write' and type 'yes' to save changes"
+  log_info "7. Select 'Quit' when done"
   log_blank
   read -r -p "Press Enter when you're ready to open cfdisk..." </dev/tty
   
