@@ -16,7 +16,7 @@ interactive_timezone_browser() {
   while true; do
     local total_active=${#active_indices[@]}
     if (( total_active == 0 )); then
-      printf "\nNo matches found. Use 'a' to reset or 'q' to quit.\n" >"$tty"
+      printf "\nNo matches found. Use 'r' to reset or 'q' to quit.\n" >"$tty"
     else
       local start=$((page * page_size))
       if (( start >= total_active )); then
@@ -32,8 +32,9 @@ interactive_timezone_browser() {
         local idx=${active_indices[i]}
         printf "%4d) %s\n" $((idx + 1)) "${_timezones_ref[idx]}" >"$tty"
       done
+      printf "Type the number beside a timezone or enter the exact timezone text to select it.\n" >"$tty"
     fi
-    printf "\nOptions: [Enter/n] next  [p] prev  [s] search  [a] all  [q] quit  [#] select\n" >"$tty"
+    printf "\nOptions: [Enter/n] next  [p] prev  [s] search  [r] reset  [q] quit  [number/text] select\n" >"$tty"
     read -r -p "Choice: " choice </dev/tty
     if [[ -z "$choice" ]]; then
       choice="n"
@@ -71,7 +72,7 @@ interactive_timezone_browser() {
         fi
         page=0
         ;;
-      a|A)
+      r|R)
         active_indices=("${!_timezones_ref[@]}")
         page=0
         ;;
@@ -89,7 +90,16 @@ interactive_timezone_browser() {
           fi
           printf "Number outside valid range.\n" >"$tty"
         else
-          printf "Unknown option.\n" >"$tty"
+          local lowered_choice="${choice,,}"
+          for tz in "${_timezones_ref[@]}"; do
+            if [[ "${tz,,}" == "$lowered_choice" ]]; then
+              selection="$tz"
+              printf "Selected timezone: %s\n" "$selection" >"$tty"
+              printf "%s" "$selection"
+              return 0
+            fi
+          done
+          printf "Unknown option. Enter an on-screen number or the exact timezone text.\n" >"$tty"
         fi
         ;;
     esac
