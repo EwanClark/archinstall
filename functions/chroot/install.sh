@@ -49,6 +49,9 @@ fi
 log_step "Installing and configuring GRUB"
 grub
 
+log_step "Generating initramfs"
+mkinitcpio -P
+
 # Clean up temporary files
 log_step "Cleaning up"
 tmp_username_file=""
@@ -64,6 +67,5 @@ if [[ -n "$tmp_username_file" && -f "$tmp_username_file" ]]; then
   mv "$tmp_username_file" /opt/archinstall/username.txt
 fi
 
-mkinitcpio -P
 
 log_step "Chroot configuration complete!"
