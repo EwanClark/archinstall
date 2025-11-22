@@ -3,6 +3,16 @@
 secure_boot_script='#!/bin/bash
 set -euo pipefail
 
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root."
+  exit 1
+fi
+
+if ! sbctl status | grep -Eiq "Setup Mode:[[:space:]]*(yes|true|enabled)"; then
+  echo "Secure Boot must be in setup mode before enrolling keys. Reboot, enable setup mode, and re-run this script."
+  exit 1
+fi
+
 sbctl create-keys
 sbctl enroll-keys --microsoft
 sbctl sign /boot/vmlinuz-linux
