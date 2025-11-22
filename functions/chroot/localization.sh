@@ -62,9 +62,9 @@ hostname() {
 }
 
 keyboard_layout() {
-  read -r -p "Would you like to set a custom keyboard layout (default is us) [Y/n]: " custom_keyboard_layout </dev/tty
+  read -r -p "Would you like to set a custom keyboard layout (default is us) [y/N]: " custom_keyboard_layout </dev/tty
   custom_keyboard_layout="${custom_keyboard_layout,,}"
-  if [[ -z "$custom_keyboard_layout" || "$custom_keyboard_layout" == "y" || "$custom_keyboard_layout" == "yes" ]]; then
+  if [[ "$custom_keyboard_layout" == "y" || "$custom_keyboard_layout" == "yes" ]]; then
     log_info "Listing available keyboard layouts"
     read -r -p "Press enter to see all available keyboard layouts" </dev/tty
     localectl list-keymaps | less </dev/tty >/dev/tty 2>&1

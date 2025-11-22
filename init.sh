@@ -32,10 +32,11 @@ mount_partitions
 log_step "Detecting required packages"
 detect_packages
 
-log_step "Selecting boot manager partition (if dual boot enabled)"
+log_step "Selecting boot manager partition)"
 select_boot_manager_partition
 
-log_step "Mounting boot manager partition (if selected)"
+# check to see if they want to select a boot manager partition !!!
+log_step "Mounting boot manager partition"
 mount_boot_manager
 
 log_step "Installing base system"
