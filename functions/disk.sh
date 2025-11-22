@@ -485,7 +485,7 @@ mount_additional_partitions() {
         local expanded_mount_point="${mount_point//\{home\}/\/home\/$username}"
         mkdir -p "/mnt$expanded_mount_point"
         mount $part_name "/mnt$expanded_mount_point"
-        log_success "Mounted $part_name at /mnt$expanded_mount_point"
+        log_info "Mounted $part_name at /mnt$expanded_mount_point"
       fi
     done
   fi
