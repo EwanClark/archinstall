@@ -269,13 +269,16 @@ get_partitions() {
         log_info "$part_name will be formatted as $fs."
 
         local mount_decision=""
+        local should_mount="no"
         local mount_point=""
         while true; do
           read -r -p "Would you like to mount $part_name? [y/N]: " mount_decision </dev/tty
           mount_decision="${mount_decision,,}"
           if [[ -z "$mount_decision" || "$mount_decision" == "n" || "$mount_decision" == "no" ]]; then
+            should_mount="no"
             break
           elif [[ "$mount_decision" == "y" || "$mount_decision" == "yes" ]]; then
+            should_mount="yes"
             while true; do
               read -r -p "Enter a mount point (use {homedir} to represent /home/\$username): " mount_point </dev/tty
               mount_point="${mount_point,,}"
@@ -300,8 +303,7 @@ get_partitions() {
             log_warn "Please answer yes or no."
           fi
         done
-
-        additional_partition_entries+=("$part_name|$fs|$mount_point|${mount_decision:-no}")
+        additional_partition_entries+=("$part_name|$fs|$mount_point|$should_mount")
         break
       else
         log_warn "Please answer yes or no."
