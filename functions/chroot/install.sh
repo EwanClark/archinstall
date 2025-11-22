@@ -50,6 +50,7 @@ log_step "Installing and configuring GRUB"
 grub
 
 log_step "Generating initramfs"
+log_blank
 mkinitcpio -P
 
 # Clean up temporary files
