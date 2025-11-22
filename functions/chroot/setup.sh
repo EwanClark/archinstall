@@ -27,7 +27,11 @@ execute_chroot_install() {
   
   # Import username from chroot environment
   if [[ -f /mnt/opt/archinstall/username.txt ]]; then
-    username=$(cat /mnt/opt/archinstall/username.txt)
+    username=$(< /mnt/opt/archinstall/username.txt)
     rm /mnt/opt/archinstall/username.txt
+  else
+    log_warn "Unable to locate the username generated inside the chroot."
   fi
+
+  rm -rf /mnt/opt/archinstall
 }

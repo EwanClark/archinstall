@@ -12,7 +12,6 @@ mkinitcpio -P
 '
 
 secure_boot_info() {
-  log_success "Secure Boot has been enabled."
   log_info "Restart your computer, enter BIOS, and enable/restart into Secure Boot setup mode."
   log_info "Boot into the new Arch installation and run the setup script found in your home directory."
   log_info "Once Secure Boot keys are enrolled, you'll be able to boot with Secure Boot enabled."
@@ -22,6 +21,13 @@ secure_boot_info() {
 }
 
 generate_script() {
-  printf '%s\n' "$secure_boot_script" > "/mnt/home/$username/secure_boot_setup.sh"
-  chmod +x "/mnt/home/$username/secure_boot_setup.sh"
+  if [[ -z "${username:-}" ]]; then
+    log_error "Unable to generate Secure Boot setup script: username is not available."
+    log_warn "Secure Boot keys must be enrolled manually."
+    return 1
+  fi
+
+  local script_path="/mnt/home/$username/secure_boot_setup.sh"
+  printf '%s\n' "$secure_boot_script" > "$script_path"
+  chmod +x "$script_path"
 }

@@ -50,7 +50,17 @@ grub
 
 # Clean up temporary files
 log_step "Cleaning up"
+tmp_username_file=""
+if [[ -f /opt/archinstall/username.txt ]]; then
+  tmp_username_file=$(mktemp /tmp/archinstall-username.XXXXXX)
+  mv /opt/archinstall/username.txt "$tmp_username_file"
+fi
+
 rm -rf /opt/archinstall
 
-log_step "Chroot configuration complete!"
+if [[ -n "$tmp_username_file" && -f "$tmp_username_file" ]]; then
+  mkdir -p /opt/archinstall
+  mv "$tmp_username_file" /opt/archinstall/username.txt
+fi
 
+log_step "Chroot configuration complete!"
