@@ -248,11 +248,13 @@ get_partitions() {
       printf "  %-22s %-8s %-6s %-10s %s\n" "NAME" "SIZE" "TYPE" "FSTYPE" "MOUNTPOINT"
       while IFS= read -r device_line; do
         eval "$device_line"
-        if [[ "$TYPE" == "part" && -n "${used_partitions[$NAME]}" ]]; then
+        local current_name="${NAME:-}"
+        local current_type="${TYPE:-}"
+        if [[ "$current_type" == "part" && -n "$current_name" && -n "${used_partitions[$current_name]:-}" ]]; then
           unset NAME SIZE TYPE FSTYPE MOUNTPOINT
           continue
         fi
-        printf "  %-22s %-8s %-6s %-10s %s\n" "$NAME" "${SIZE:-unknown}" "${TYPE:-?}" "${FSTYPE:-unknown}" "${MOUNTPOINT:--}"
+        printf "  %-22s %-8s %-6s %-10s %s\n" "${current_name:-unknown}" "${SIZE:-unknown}" "${current_type:-?}" "${FSTYPE:-unknown}" "${MOUNTPOINT:--}"
         unset NAME SIZE TYPE FSTYPE MOUNTPOINT
       done < <(lsblk -nP -p -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT)
     }
