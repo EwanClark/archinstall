@@ -97,7 +97,6 @@ mount_another_boot_loader() {
 
 cleanup_additional_boot_mounts() {
   log_step "Cleaning up additional boot mount points"
-  log_blank
   local idx
   for idx in "${!additional_boot_mountpoints[@]}"; do
     local mountpoint="${additional_boot_mountpoints[$idx]}"
@@ -107,6 +106,7 @@ cleanup_additional_boot_mounts() {
 
     if mountpoint -q "$mountpoint"; then
       if umount "$mountpoint"; then
+        log_blank
         log_info "Unmounted $mountpoint"
       else
         log_warn "Unable to unmount $mountpoint. Please unmount it manually."
