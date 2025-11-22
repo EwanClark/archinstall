@@ -59,22 +59,22 @@ detect_packages() {
     use_intel=true
   fi
 
-  # Default dual boot and secure boot to false
-  local use_dual_boot=false
-  local use_secure_boot=false
+  # Default dual boot and secure boot to true
+  local use_dual_boot=true
+  local use_secure_boot=true
 
   # Show overview and get user confirmation
   while true; do
-    echo ""
-    echo "=== Package Configuration Overview ==="
-    echo "1. GPU:         $([ "$use_nvidia" = true ] && echo "NVIDIA" || echo "AMD/Intel")"
-    echo "2. CPU:         $([ "$use_intel" = true ] && echo "Intel" || echo "AMD")"
-    echo "3. Dual Boot:   $([ "$use_dual_boot" = true ] && echo "Enabled" || echo "Disabled")"
-    echo "4. Secure Boot: $([ "$use_secure_boot" = true ] && echo "Enabled" || echo "Disabled")"
-    echo ""
-    echo "Note: Dual Boot and Secure Boot can be enabled for compatibility even if not currently needed."
-    echo ""
-    echo "Press Enter to continue, or enter a number (1-4) to toggle:"
+    log_blank
+    log_title "=== Package Configuration Overview ==="
+    log_info "1. GPU:         $([ "$use_nvidia" = true ] && printf "NVIDIA" || printf "AMD/Intel")"
+    log_info "2. CPU:         $([ "$use_intel" = true ] && printf "Intel" || printf "AMD")"
+    log_info "3. Dual Boot:   $([ "$use_dual_boot" = true ] && printf "Enabled" || printf "Disabled")"
+    log_info "4. Secure Boot: $([ "$use_secure_boot" = true ] && printf "Enabled" || printf "Disabled")"
+    log_blank
+    log_info "Note: Dual Boot and Secure Boot can be enabled for compatibility even if not currently needed."
+    log_blank
+    log_info "Press Enter to continue, or enter a number (1-4) to switch between options:"
     
     read -r choice </dev/tty
     
@@ -116,7 +116,7 @@ detect_packages() {
         fi
         ;;
       *)
-        echo "Invalid choice. Please enter 1-4 or press Enter to continue."
+        log_warn "Invalid choice. Please enter 1-4 or press Enter to continue."
         ;;
     esac
   done
