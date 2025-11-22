@@ -64,4 +64,6 @@ if [[ -n "$tmp_username_file" && -f "$tmp_username_file" ]]; then
   mv "$tmp_username_file" /opt/archinstall/username.txt
 fi
 
+mkinitcpio -P
+
 log_step "Chroot configuration complete!"
