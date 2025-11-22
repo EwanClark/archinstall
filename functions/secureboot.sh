@@ -1,14 +1,15 @@
 #! /bin/bash
 
-# NEED TO ADD CHECKS TO MAKE SURE SURE THE SCRIPT FAILS IF ANY COMMANDS FAIL !!!!!!!!!
-secure_boot_script="
+secure_boot_script='#!/bin/bash
+set -euo pipefail
+
 sbctl create-keys
 sbctl enroll-keys --microsoft
 sbctl sign /boot/vmlinuz-linux
 sbctl sign /boot/efi/EFI/arch/grubx64.efi
 
 mkinitcpio -P
-"
+'
 
 secure_boot_info() {
   log_success "Secure Boot has been enabled."
@@ -21,6 +22,6 @@ secure_boot_info() {
 }
 
 generate_script() {
-  echo $secure_boot_script > /mnt/home/$username/secure_boot_setup.sh
-  chmod +x /mnt/home/$username/secure_boot_setup.sh
+  printf '%s\n' "$secure_boot_script" > "/mnt/home/$username/secure_boot_setup.sh"
+  chmod +x "/mnt/home/$username/secure_boot_setup.sh"
 }
