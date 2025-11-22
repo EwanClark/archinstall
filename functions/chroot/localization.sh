@@ -23,9 +23,9 @@ timezone() {
 }
 
 locale() {
-  read -r -p "Would you like a custom locale (default is en_us) [Y/n]: " custom_locale </dev/tty
+  read -r -p "Would you like a custom locale (default is en_us) [y/N]: " custom_locale </dev/tty
   custom_locale="${custom_locale,,}"
-  if [[ -z "$custom_locale" || "$custom_locale" == "y" || "$custom_locale" == "yes" ]]; then
+  if [[ "$custom_locale" == "y" || "$custom_locale" == "yes" ]]; then
     read -r -p "Press enter to be taken to the file to uncomment the locale you want to use" </dev/tty
     nano /etc/locale.gen </dev/tty >/dev/tty 2>&1
     read -r -p "Have you uncommented the locale you want to use? [Y/n]: " uncommented_locale </dev/tty
