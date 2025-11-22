@@ -26,28 +26,51 @@ boot_manager_partition=""
 
 is_reserved_mountpoint() {
   local candidate="$1"
-  local reserved_paths=(
+  # Normalize to avoid trailing slashes causing false negatives (keep / as-is)
+  if [[ "$candidate" != "/" ]]; then
+    candidate="${candidate%/}"
+  fi
+  local -a strict_reserved_paths=(
     "/"
     "/bin"
     "/boot"
     "/dev"
     "/etc"
-    "/home"
     "/lib"
     "/lib64"
-    "/mnt"
-    "/opt"
     "/proc"
     "/root"
     "/run"
-    "/srv"
     "/sys"
-    "/tmp"
     "/usr"
+  )
+  local -a exact_only_paths=(
+    "/home"
+    "/mnt"
+    "/opt"
+    "/srv"
+    "/tmp"
     "/var"
   )
-  for path in "${reserved_paths[@]}"; do
-    if [[ "$candidate" == "$path" ]]; then
+  local path normalized_path
+  for path in "${strict_reserved_paths[@]}"; do
+    normalized_path="$path"
+    if [[ "$normalized_path" != "/" ]]; then
+      normalized_path="${normalized_path%/}"
+    fi
+    if [[ "$candidate" == "$normalized_path" ]]; then
+      return 0
+    fi
+    if [[ "$normalized_path" != "/" && "$candidate" == "$normalized_path"/* ]]; then
+      return 0
+    fi
+  done
+  for path in "${exact_only_paths[@]}"; do
+    normalized_path="$path"
+    if [[ "$normalized_path" != "/" ]]; then
+      normalized_path="${normalized_path%/}"
+    fi
+    if [[ "$candidate" == "$normalized_path" ]]; then
       return 0
     fi
   done
