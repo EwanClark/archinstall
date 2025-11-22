@@ -332,57 +332,6 @@ mount_partitions() {
   swapon $swap_partition
 }
 
-select_boot_manager_partition() {
-  if [[ "${dual_boot:-false}" != "true" ]]; then
-    return
-  fi
-
-  log_blank
-  log_title "Boot Manager Partition for os-prober"
-  while true; do
-    read -r -p "Do you have another boot loader you want to mount? [y/N]: " choice </dev/tty
-    choice="${choice,,}"
-    if [[ -z "$choice" || "$choice" == "n" || "$choice" == "no" ]]; then
-      return
-    elif [[ "$choice" == "y" || "$choice" == "yes" ]]; then
-      break
-    else
-      log_warn "Please answer yes or no."
-    fi
-  done
-
-  log_blank
-  log_info "Available partitions:"
-  lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
-  log_blank
-  
-  while true; do
-    read -r -p "Enter the partition to mount (e.g., /dev/sda1): " boot_manager_partition </dev/tty
-    if [[ -z "$boot_manager_partition" ]]; then
-      log_warn "Partition cannot be empty."
-      continue
-    fi
-    if [[ ! -b "$boot_manager_partition" ]]; then
-      log_warn "Invalid partition. Please try again."
-      continue
-    fi
-    log_success "Selected boot manager partition: $boot_manager_partition"
-    break
-  done
-}
-
-mount_boot_manager() {
-  if [[ -n "$boot_manager_partition" ]]; then
-    log_info "Mounting boot manager partition $boot_manager_partition for os-prober"
-    mkdir -p /mnt/mnt
-    if mount "$boot_manager_partition" /mnt/mnt 2>/dev/null; then
-      log_success "Mounted boot manager partition at /mnt/mnt"
-    else
-      log_warn "Failed to mount boot manager partition. os-prober may not detect other OSes."
-    fi
-  fi
-}
-
 mount_additional_partitions() {
   if ((${#additional_partition_entries[@]} > 0)); then
     local entry

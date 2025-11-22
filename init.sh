@@ -32,13 +32,6 @@ mount_partitions
 log_step "Detecting required packages"
 detect_packages
 
-log_step "Selecting boot manager partition)"
-select_boot_manager_partition
-
-# check to see if they want to select a boot manager partition !!!
-log_step "Mounting boot manager partition"
-mount_boot_manager
-
 log_step "Installing base system"
 install_packages
 
