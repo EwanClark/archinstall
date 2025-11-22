@@ -379,7 +379,7 @@ get_partitions() {
       local should_mount="no"
       local mount_point=""
       while true; do
-        read -r -p "Where should $target_partition be mounted? (use {homedir} for /home/\$username, blank or 'no' to skip): " mount_point </dev/tty
+        read -r -p "Where should $target_partition be mounted? (use {homedir} for /home/\$username, Enter or 'no' to skip): " mount_point </dev/tty
         mount_point="${mount_point,,}"
         if [[ -z "$mount_point" || "$mount_point" == "no" ]]; then
           should_mount="no"
