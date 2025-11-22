@@ -8,6 +8,7 @@ setup_chroot() {
   cp functions/chroot/*.sh /mnt/opt/archinstall/chroot_functions/
   cp functions/compatibility.sh /mnt/opt/archinstall/chroot_functions/
   cp functions/logging.sh /mnt/opt/archinstall/chroot_functions/
+  cp functions/browser.sh /mnt/opt/archinstall/chroot_functions/
   
   # Copy the main chroot install script
   cp functions/chroot/install.sh /mnt/opt/archinstall/chroot_install.sh
