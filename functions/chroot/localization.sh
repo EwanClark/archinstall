@@ -25,13 +25,9 @@ timezone() {
   local resolved_timezone=""
   local browse_selection=""
 
-  read -r -p "Would you like to browse available timezones first? [Y/n]: " browse_choice </dev/tty
-  browse_choice="${browse_choice,,}"
-  if [[ "$browse_choice" != "n" && "$browse_choice" != "no" ]]; then
-    browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
-    if [[ -n "$browse_selection" ]]; then
-      timezone_input="$browse_selection"
-    fi
+  browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
+  if [[ -n "$browse_selection" ]]; then
+    timezone_input="$browse_selection"
   fi
 
   while true; do
@@ -56,14 +52,8 @@ timezone() {
     done
     if [[ -z "$resolved_timezone" ]]; then
       log_error "Invalid timezone. Please try again."
-      read -r -p "Would you like to browse the timezone list? [Y/n]: " browse_retry </dev/tty
-      browse_retry="${browse_retry,,}"
-      if [[ "$browse_retry" != "n" && "$browse_retry" != "no" ]]; then
-        browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
-        timezone_input="$browse_selection"
-      else
-        timezone_input=""
-      fi
+      browse_selection=$(interactive_list_browser "timezone" "timezones" available_timezones)
+      timezone_input="$browse_selection"
       continue
     fi
     ln -sf "/usr/share/zoneinfo/$resolved_timezone" /etc/localtime
@@ -130,13 +120,9 @@ keyboard_layout() {
     local resolved_keymap=""
     local browse_selection=""
 
-    read -r -p "Would you like to browse available keyboard layouts first? [Y/n]: " browse_choice </dev/tty
-    browse_choice="${browse_choice,,}"
-    if [[ "$browse_choice" != "n" && "$browse_choice" != "no" ]]; then
-      browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
-      if [[ -n "$browse_selection" ]]; then
-        keyboard_layout_input="$browse_selection"
-      fi
+    browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
+    if [[ -n "$browse_selection" ]]; then
+      keyboard_layout_input="$browse_selection"
     fi
 
     while true; do
@@ -163,14 +149,8 @@ keyboard_layout() {
 
       if [[ -z "$resolved_keymap" ]]; then
         log_error "Invalid keyboard layout. Please try again."
-        read -r -p "Would you like to browse the keyboard layouts? [Y/n]: " browse_retry </dev/tty
-        browse_retry="${browse_retry,,}"
-        if [[ "$browse_retry" != "n" && "$browse_retry" != "no" ]]; then
-          browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
-          keyboard_layout_input="$browse_selection"
-        else
-          keyboard_layout_input=""
-        fi
+        browse_selection=$(interactive_list_browser "keyboard layout" "keyboard layouts" available_keymaps 25)
+        keyboard_layout_input="$browse_selection"
         continue
       fi
 
