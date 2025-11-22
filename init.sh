@@ -32,6 +32,12 @@ mount_partitions
 log_step "Detecting required packages"
 detect_packages
 
+log_step "Selecting boot manager partition (if dual boot enabled)"
+select_boot_manager_partition
+
+log_step "Mounting boot manager partition (if selected)"
+mount_boot_manager
+
 log_step "Installing base system"
 install_packages
 

@@ -2,7 +2,7 @@
 timezone() {
   log_info "Setting timezone configuration"
   read -r -p "Press enter to see all available timezones" </dev/tty
-  timedatectl list-timezones
+  timedatectl list-timezones | less </dev/tty >/dev/tty 2>&1
   local timezone_input=""
   local resolved_timezone=""
   while true; do
@@ -59,4 +59,33 @@ hostname() {
     log_error "Hostnames must be 1-63 characters, start/end with alphanumeric, and may include '-' in the middle."
   done
   echo "$hostname_value" > /etc/hostname
+}
+
+keyboard_layout() {
+  read -r -p "Would you like to set a custom keyboard layout (default is us) [Y/n]: " custom_keyboard_layout </dev/tty
+  custom_keyboard_layout="${custom_keyboard_layout,,}"
+  if [[ -z "$custom_keyboard_layout" || "$custom_keyboard_layout" == "y" || "$custom_keyboard_layout" == "yes" ]]; then
+    log_info "Listing available keyboard layouts"
+    read -r -p "Press enter to see all available keyboard layouts" </dev/tty
+    localectl list-keymaps | less </dev/tty >/dev/tty 2>&1
+    local keyboard_layout_input=""
+    local resolved_keymap=""
+    while true; do
+      read -r -p "Enter your keyboard layout (e.g. us, de, fr): " keyboard_layout_input </dev/tty
+      keyboard_layout_input="${keyboard_layout_input,,}"
+      if [[ -z "$keyboard_layout_input" ]]; then
+        log_error "Keyboard layout cannot be empty."
+        continue
+      fi
+      resolved_keymap=$(localectl list-keymaps | awk -v target="$keyboard_layout_input" 'tolower($0)==tolower(target) {print $0; exit}')
+      if [[ -z "$resolved_keymap" ]]; then
+        log_error "Invalid keyboard layout. Please try again."
+        continue
+      fi
+      echo "KEYMAP=$resolved_keymap" > /etc/vconsole.conf
+      break
+    done
+  else
+    echo "KEYMAP=us" > /etc/vconsole.conf
+  fi
 }
