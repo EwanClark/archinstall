@@ -229,7 +229,7 @@ get_partitions() {
     log_blank
     log_title "Optional additional partitions"
     log_info "Detected other devices or unused partitions."
-    log_info "Enter partitions to include (press Enter or type 'no' to finish)."
+    log_info "Enter partitions to include (press Enter or 'no' to finish)."
 
     declare -A used_partitions=()
     [[ -n "$boot_partition" ]] && used_partitions["$boot_partition"]=1
@@ -332,7 +332,7 @@ get_partitions() {
     while true; do
       log_blank
       print_filtered_lsblk
-      read -r -p "Partition to include (blank/'no' to finish): " partition_choice </dev/tty
+      read -r -p "Partition to include (Enter or 'no' to finish): " partition_choice </dev/tty
       partition_choice="${partition_choice//[$'\t\r\n ']}"
       local normalized_choice="${partition_choice,,}"
       if [[ -z "$normalized_choice" || "$normalized_choice" == "no" ]]; then
