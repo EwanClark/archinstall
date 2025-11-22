@@ -10,6 +10,7 @@ source /opt/archinstall/chroot_functions/localization.sh
 source /opt/archinstall/chroot_functions/nvidia.sh
 source /opt/archinstall/chroot_functions/services.sh
 source /opt/archinstall/chroot_functions/compatibility.sh
+source /opt/archinstall/chroot_functions/browser.sh
 
 # Import variables from host environment
 source /opt/archinstall/chroot_vars.sh
