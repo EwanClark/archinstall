@@ -269,40 +269,28 @@ get_partitions() {
         local fs="ext4"
         log_info "$part_name will be formatted as $fs."
 
-        local mount_decision=""
         local should_mount="no"
         local mount_point=""
         while true; do
-          read -r -p "Would you like to mount $part_name? [y/N]: " mount_decision </dev/tty
-          mount_decision="${mount_decision,,}"
-          if [[ -z "$mount_decision" || "$mount_decision" == "n" || "$mount_decision" == "no" ]]; then
+          read -r -p "Where should $part_name be mounted? (use {homedir} for /home/\$username, blank or 'no' to skip): " mount_point </dev/tty
+          mount_point="${mount_point,,}"
+          if [[ -z "$mount_point" || "$mount_point" == "no" ]]; then
             should_mount="no"
+            mount_point=""
             break
-          elif [[ "$mount_decision" == "y" || "$mount_decision" == "yes" ]]; then
-            should_mount="yes"
-            while true; do
-              read -r -p "Enter a mount point (use {homedir} to represent /home/\$username): " mount_point </dev/tty
-              mount_point="${mount_point,,}"
-              if [[ -z "$mount_point" ]]; then
-                log_warn "Mount point cannot be empty."
-                continue
-              fi
-              if [[ "$mount_point" != \{homedir\}* && "$mount_point" != /* ]]; then
-                log_warn "Mount points must start with '/' or '{homedir}'."
-                continue
-              fi
-              local validation_target="$mount_point"
-              validation_target="${validation_target//\{homedir\}/\/home\/\$username}"
-              if is_reserved_mountpoint "$validation_target"; then
-                log_warn "That path already exists in the base system. Choose another directory."
-                continue
-              fi
-              break
-            done
-            break
-          else
-            log_warn "Please answer yes or no."
           fi
+          if [[ "$mount_point" != \{homedir\}* && "$mount_point" != /* ]]; then
+            log_warn "Mount points must start with '/' or '{homedir}'."
+            continue
+          fi
+          local validation_target="$mount_point"
+          validation_target="${validation_target//\{homedir\}/\/home\/\$username}"
+          if is_reserved_mountpoint "$validation_target"; then
+            log_warn "That path already exists in the base system. Choose another directory."
+            continue
+          fi
+          should_mount="yes"
+          break
         done
         additional_partition_entries+=("$part_name|$fs|$mount_point|$should_mount")
         break
