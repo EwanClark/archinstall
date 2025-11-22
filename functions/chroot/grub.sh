@@ -8,6 +8,8 @@ declare -a additional_boot_partitions=()
 declare -a additional_boot_mountpoints=()
 
 mount_another_boot_loader() {
+  log_step "Mounting additional boot loader"
+  log_blank
   while true; do
     read -r -p "Do you want grub to detect another boot loader? [y/N]: " choice </dev/tty
     local normalized_choice="${choice,,}"
@@ -94,6 +96,8 @@ mount_another_boot_loader() {
 }
 
 cleanup_additional_boot_mounts() {
+  log_step "Cleaning up additional boot mount points"
+  log_blank
   local idx
   for idx in "${!additional_boot_mountpoints[@]}"; do
     local mountpoint="${additional_boot_mountpoints[$idx]}"
