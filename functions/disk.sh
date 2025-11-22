@@ -246,17 +246,92 @@ get_partitions() {
     print_filtered_lsblk() {
       log_info "Current block devices (excluding assigned Arch partitions):"
       printf "  %-22s %-8s %-6s %-10s %s\n" "NAME" "SIZE" "TYPE" "FSTYPE" "MOUNTPOINT"
+
+      declare -A node_size=()
+      declare -A node_type=()
+      declare -A node_fs=()
+      declare -A node_mount=()
+      declare -A disk_children=()
+      declare -A skip_nodes=()
+      declare -a disk_order=()
+
       while IFS= read -r device_line; do
         eval "$device_line"
-        local current_name="${NAME:-}"
-        local current_type="${TYPE:-}"
-        if [[ "$current_type" == "part" && -n "$current_name" && -n "${used_partitions[$current_name]:-}" ]]; then
-          unset NAME SIZE TYPE FSTYPE MOUNTPOINT
+        local name="$NAME"
+        local parent="$PKNAME"
+        local type="$TYPE"
+        local should_skip=0
+        if [[ -n "$MOUNTPOINT" && "$MOUNTPOINT" == /run/archiso* ]]; then
+          should_skip=1
+        elif [[ -n "$parent" && -n "${skip_nodes[$parent]+x}" ]]; then
+          should_skip=1
+        fi
+        if (( should_skip )); then
+          skip_nodes["$name"]=1
+          unset NAME PKNAME TYPE SIZE FSTYPE MOUNTPOINT
           continue
         fi
-        printf "  %-22s %-8s %-6s %-10s %s\n" "${current_name:-unknown}" "${SIZE:-unknown}" "${current_type:-?}" "${FSTYPE:-unknown}" "${MOUNTPOINT:--}"
-        unset NAME SIZE TYPE FSTYPE MOUNTPOINT
-      done < <(lsblk -nP -p -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT)
+
+        node_size["$name"]="${SIZE:-unknown}"
+        node_type["$name"]="${type:-?}"
+        node_fs["$name"]="${FSTYPE:-unknown}"
+        node_mount["$name"]="${MOUNTPOINT:--}"
+
+        if [[ "$type" == "disk" ]]; then
+          disk_order+=("$name")
+        fi
+        if [[ -n "$parent" ]]; then
+          disk_children["$parent"]+="$name "
+        fi
+
+        unset NAME PKNAME TYPE SIZE FSTYPE MOUNTPOINT
+      done < <(lsblk -nP -p -o NAME,PKNAME,TYPE,SIZE,FSTYPE,MOUNTPOINT)
+
+      local printed_any=0
+      local disk
+      for disk in "${disk_order[@]}"; do
+        if [[ -n "${skip_nodes[$disk]+x}" ]]; then
+          continue
+        fi
+        local disk_size="${node_size[$disk]:-unknown}"
+        printf "  %s (%s disk)\n" "$disk" "$disk_size"
+        printed_any=1
+
+        local child_list="${disk_children[$disk]}"
+        local -a visible_children=()
+        local child
+        for child in $child_list; do
+          if [[ -n "${skip_nodes[$child]+x}" ]]; then
+            continue
+          fi
+          if [[ "${node_type[$child]}" != "part" ]]; then
+            continue
+          fi
+          if [[ -n "${used_partitions[$child]+x}" ]]; then
+            continue
+          fi
+          visible_children+=("$child")
+        done
+
+        if ((${#visible_children[@]} == 0)); then
+          printf "    (no available partitions on this disk)\n"
+          continue
+        fi
+
+        local idx
+        for idx in "${!visible_children[@]}"; do
+          child="${visible_children[$idx]}"
+          local marker="|-"
+          if (( idx == ${#visible_children[@]} - 1 )); then
+            marker="\\-"
+          fi
+          printf "    %s %-18s %-8s %-6s %-10s %s\n" "$marker" "$child" "${node_size[$child]:-unknown}" "${node_type[$child]:-?}" "${node_fs[$child]:-unknown}" "${node_mount[$child]:--}"
+        done
+      done
+
+      if (( !printed_any )); then
+        printf "  (no eligible devices detected)\n"
+      fi
     }
 
     while true; do
