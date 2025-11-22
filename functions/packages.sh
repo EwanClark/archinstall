@@ -125,8 +125,10 @@ detect_packages() {
   # Add packages based on selections
   if [ "$use_nvidia" = true ]; then
     packages+=("${nvidia_gpu_packages[@]}")
+    nvidia="true"
   else
     packages+=("${amd_intel_gpu_packages[@]}")
+    nvidia="false"
   fi
 
   if [ "$use_intel" = true ]; then
@@ -137,10 +139,16 @@ detect_packages() {
 
   if [ "$use_dual_boot" = true ]; then
     packages+=("${dual_boot_packages[@]}")
+    dual_boot="true"
+  else
+    dual_boot="false"
   fi
 
   if [ "$use_secure_boot" = true ]; then
     packages+=("${secure_boot_packages[@]}")
+    secure_boot="true"
+  else
+    secure_boot="false"
   fi
 }
 
