@@ -4,96 +4,123 @@ secure_boot_modules="
  all_video boot btrfs cat chain configfile echo efifwsetup efinet ext2 fat font gettext gfxmenu gfxterm gfxterm_background gzio halt help hfsplus iso9660 jpeg keystatus loadenv loopback linux ls lsefi lsefimmap lsefisystab lssal memdisk minicmd normal ntfs part_apple part_msdos part_gpt password_pbkdf2 png probe reboot regexp search search_fs_uuid search_fs_file search_label sleep smbios squash4 test true video xfs zfs zfscrypt zfsinfo play cpuid tpm cryptodisk luks lvm mdraid09 mdraid1x raid5rec raid6rec 
 "
 
-prompt_boot_manager_mounts() {
-  local mount_index=1
+declare -a additional_boot_partitions=()
+declare -a additional_boot_mountpoints=()
+
+mount_another_boot_loader() {
+  while true; do
+    read -r -p "Do you want grub to detect another boot loader? [y/N]: " choice </dev/tty
+    local normalized_choice="${choice,,}"
+    if [[ -z "$normalized_choice" || "$normalized_choice" == "n" || "$normalized_choice" == "no" ]]; then
+      return
+    elif [[ "$normalized_choice" == "y" || "$normalized_choice" == "yes" ]]; then
+      break
+    else
+      log_warn "Please answer yes or no."
+    fi
+  done
+
+  local selection=""
+  local mounted_any=false
+  local next_index=$(( ${#additional_boot_mountpoints[@]} + 1 ))
+
   while true; do
     log_blank
-    log_title "Current block devices (lsblk)"
+    log_title "Available partitions"
     lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
+    log_blank
 
-    local partition_input=""
-    read -r -p "Partition to mount for another boot loader [or 'done']: " partition_input </dev/tty
-    partition_input="${partition_input,,}"
-    if [[ -z "$partition_input" || "$partition_input" == "done" || "$partition_input" == "skip" ]]; then
-      log_info "Finished handling extra boot loader mounts."
-      break
-    fi
+    read -r -p "Enter the partition you would like to mount (e.g., nvme0n1p3 or /dev/sda1) [or 'back']: " selection </dev/tty
 
-    local partition_path="$partition_input"
-    if [[ "$partition_path" != /dev/* ]]; then
-      partition_path="/dev/$partition_path"
-    fi
-    if [[ ! -b "$partition_path" ]]; then
-      log_warn "$partition_path is not a valid block device."
+    local normalized_selection="${selection,,}"
+    if [[ -z "$normalized_selection" ]]; then
+      log_warn "Please choose a partition or type 'back' to cancel."
       continue
     fi
 
-    local target=""
-    while true; do
-      target="/mnt/$mount_index"
-      if mountpoint -q "$target"; then
-        mount_index=$((mount_index + 1))
-        continue
+    if [[ "$normalized_selection" == "back" || "$normalized_selection" == "b" || "$normalized_selection" == "skip" ]]; then
+      if [[ "$mounted_any" == "true" ]]; then
+        break
+      else
+        log_info "Skipping additional boot loader detection."
+        return
       fi
-      break
-    done
-
-    if mount --mkdir -o ro "$partition_path" "$target"; then
-      log_success "Mounted $partition_path at $target (read-only)."
-      mount_index=$((mount_index + 1))
-    else
-      log_error "Failed to mount $partition_path at $target."
     fi
+
+    if [[ "$normalized_selection" != /dev/* ]]; then
+      normalized_selection="/dev/$normalized_selection"
+    fi
+
+    if [[ ! -b "$normalized_selection" ]]; then
+      log_error "Partition '$normalized_selection' does not exist. Please try again."
+      continue
+    fi
+
+    local mount_dir="/mnt/$next_index"
+    ((next_index++))
+
+    mkdir -p "$mount_dir"
+    if mountpoint -q "$mount_dir"; then
+      umount "$mount_dir"
+    fi
+
+    if mount -o ro "$normalized_selection" "$mount_dir"; then
+      additional_boot_partitions+=("$normalized_selection")
+      additional_boot_mountpoints+=("$mount_dir")
+      mounted_any=true
+      log_success "Mounted $normalized_selection at $mount_dir"
+    else
+      log_error "Failed to mount $normalized_selection. Please try another partition."
+      if [[ -d "$mount_dir" ]]; then
+        rmdir "$mount_dir"
+      fi
+      # Reuse the mount_dir index since this mount failed.
+      next_index=$((next_index - 1))
+      continue
+    fi
+
+    while true; do
+      read -r -p "Mount another partition for boot detection? [y/N]: " continue_choice </dev/tty
+      local normalized_continue="${continue_choice,,}"
+      if [[ -z "$normalized_continue" || "$normalized_continue" == "n" || "$normalized_continue" == "no" ]]; then
+        return
+      elif [[ "$normalized_continue" == "y" || "$normalized_continue" == "yes" ]]; then
+        break
+      else
+        log_warn "Please answer yes or no."
+      fi
+    done
   done
 }
 
-mount_another_boot_loader() {
-  local manual_required="false"
-
-  if command -v efibootmgr >/dev/null 2>&1; then
-    local -a boot_entries=()
-    while IFS= read -r entry; do
-      [[ -z "$entry" ]] && continue
-      boot_entries+=("$entry")
-    done < <(efibootmgr -v | grep -E '^Boot[0-9A-Fa-f]{4}')
-
-    if ((${#boot_entries[@]} > 0)); then
-      log_blank
-      log_title "Detected EFI boot managers"
-      local entry
-      for entry in "${boot_entries[@]}"; do
-        log_info "  $entry"
-      done
-
-      while true; do
-        local wants_mount=""
-        read -r -p "Need to mount any of these (or another) for GRUB detection? [y/N]: " wants_mount </dev/tty
-        wants_mount="${wants_mount,,}"
-        case "$wants_mount" in
-          ""|"n"|"no")
-            return
-            ;;
-          "y"|"yes")
-            manual_required="true"
-            break
-            ;;
-          *)
-            log_warn "Please answer yes or no."
-            ;;
-        esac
-      done
-    else
-      log_info "No EFI boot managers were reported by the firmware."
-      manual_required="true"
+cleanup_additional_boot_mounts() {
+  local idx
+  for idx in "${!additional_boot_mountpoints[@]}"; do
+    local mountpoint="${additional_boot_mountpoints[$idx]}"
+    if [[ -z "$mountpoint" ]]; then
+      continue
     fi
-  else
-    log_warn "efibootmgr is unavailable; manual boot manager selection required."
-    manual_required="true"
-  fi
 
-  if [[ "$manual_required" == "true" ]]; then
-    prompt_boot_manager_mounts
-  fi
+    if mountpoint -q "$mountpoint"; then
+      if umount "$mountpoint"; then
+        log_info "Unmounted $mountpoint"
+      else
+        log_warn "Unable to unmount $mountpoint. Please unmount it manually."
+        continue
+      fi
+    fi
+
+    if [[ -d "$mountpoint" ]]; then
+      if rmdir "$mountpoint"; then
+        log_info "Removed $mountpoint"
+      else
+        log_warn "Unable to remove $mountpoint. Please remove it manually."
+      fi
+    fi
+  done
+
+  additional_boot_partitions=()
+  additional_boot_mountpoints=()
 }
 
 grub() {
@@ -107,4 +134,6 @@ grub() {
     grub-install $boot_partition --efi-directory=/boot/efi
   fi
   grub-mkconfig -o /boot/grub/grub.cfg
+
+  cleanup_additional_boot_mounts
 }
