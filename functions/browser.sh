@@ -71,15 +71,17 @@ interactive_list_browser() {
       choice="n"
     fi
 
-    case "$choice" in
-      n|N)
+    local normalized_choice="${choice,,}"
+
+    case "$normalized_choice" in
+      n|next)
         if (( total_active > 0 && (page + 1) * page_size < total_active )); then
           ((page++))
         else
           page=0
         fi
         ;;
-      p|P)
+      p|prev)
         if (( page > 0 )); then
           ((page--))
         else
@@ -89,7 +91,7 @@ interactive_list_browser() {
           fi
         fi
         ;;
-      s|S)
+      s|search)
         read -r -p "Search term (case-insensitive): " term </dev/tty
         term="${term,,}"
         active_indices=()
@@ -104,11 +106,11 @@ interactive_list_browser() {
         fi
         page=0
         ;;
-      r|R)
+      r|reset)
         active_indices=("${!_items_ref[@]}")
         page=0
         ;;
-      q|Q)
+      q|quit|exit)
         break
         ;;
       *)
