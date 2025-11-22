@@ -274,7 +274,7 @@ get_partitions() {
       fi
       local target_partition="$normalized_choice"
 
-      if [[ -n "${used_partitions[$target_partition]}" ]]; then
+      if [[ -n "${used_partitions[$target_partition]+x}" ]]; then
         log_warn "$target_partition is already assigned."
         continue
       fi
