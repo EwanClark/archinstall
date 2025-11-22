@@ -204,6 +204,123 @@ get_partitions() {
     return 0
   }
 
+  offer_additional_partitions() {
+    local has_extra_on_disk=0
+    local has_other_device=0
+
+    if ((${#extra_partitions[@]} > 0)); then
+      has_extra_on_disk=1
+    fi
+
+    while IFS= read -r device_line; do
+      eval "$device_line"
+      if [[ "$TYPE" == "disk" && "$NAME" != "$disk" ]]; then
+        has_other_device=1
+        unset NAME TYPE
+        break
+      fi
+      unset NAME TYPE
+    done < <(lsblk -nP -p -o NAME,TYPE)
+
+    if (( !has_extra_on_disk && !has_other_device )); then
+      return
+    fi
+
+    log_blank
+    log_title "Optional additional partitions"
+    log_info "Detected other devices or unused partitions."
+    log_info "Enter partitions to include (press Enter or type 'no' to finish)."
+
+    declare -A used_partitions=()
+    [[ -n "$boot_partition" ]] && used_partitions["$boot_partition"]=1
+    [[ -n "$swap_partition" ]] && used_partitions["$swap_partition"]=1
+    [[ -n "$root_partition" ]] && used_partitions["$root_partition"]=1
+    local entry existing_part
+    for entry in "${additional_partition_entries[@]}"; do
+      IFS="|" read -r existing_part _ <<< "$entry"
+      if [[ -n "$existing_part" ]]; then
+        used_partitions["$existing_part"]=1
+      fi
+    done
+
+    while true; do
+      log_blank
+      log_info "Current block devices:"
+      lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
+      read -r -p "Partition to include (blank/'no' to finish): " partition_choice </dev/tty
+      partition_choice="${partition_choice//[$'\t\r\n ']}"
+      local normalized_choice="${partition_choice,,}"
+      if [[ -z "$normalized_choice" || "$normalized_choice" == "no" ]]; then
+        log_info "Finished selecting additional partitions."
+        break
+      fi
+      if [[ "$normalized_choice" != /dev/* ]]; then
+        normalized_choice="/dev/$normalized_choice"
+      fi
+      local target_partition="$normalized_choice"
+
+      if [[ -n "${used_partitions[$target_partition]}" ]]; then
+        log_warn "$target_partition is already assigned."
+        continue
+      fi
+
+      if [[ ! -b "$target_partition" ]]; then
+        log_warn "$target_partition does not exist."
+        continue
+      fi
+
+      local part_type
+      part_type=$(lsblk -no TYPE "$target_partition" 2>/dev/null)
+      if [[ "$part_type" != "part" ]]; then
+        log_warn "$target_partition is not a partition."
+        continue
+      fi
+
+      local part_info
+      local part_size="unknown"
+      local part_fstype="unknown"
+      part_info=$(lsblk -nP -p -o NAME,SIZE,FSTYPE "$target_partition" 2>/dev/null | head -n1)
+      if [[ -n "$part_info" ]]; then
+        eval "$part_info"
+        part_size="${SIZE:-unknown}"
+        part_fstype="${FSTYPE:-unknown}"
+        unset NAME SIZE FSTYPE
+      fi
+      log_info "Selected $target_partition ($part_size, filesystem: $part_fstype)"
+
+      local fs="ext4"
+      log_info "$target_partition will be formatted as $fs."
+
+      local should_mount="no"
+      local mount_point=""
+      while true; do
+        read -r -p "Where should $target_partition be mounted? (use {homedir} for /home/\$username, blank or 'no' to skip): " mount_point </dev/tty
+        mount_point="${mount_point,,}"
+        if [[ -z "$mount_point" || "$mount_point" == "no" ]]; then
+          should_mount="no"
+          mount_point=""
+          break
+        fi
+        if [[ "$mount_point" != \{homedir\}* && "$mount_point" != /* ]]; then
+          log_warn "Mount points must start with '/' or '{homedir}'."
+          continue
+        fi
+        local validation_target="$mount_point"
+        validation_target="${validation_target//\{homedir\}/\/home\/\$username}"
+        if is_reserved_mountpoint "$validation_target"; then
+          log_warn "That path already exists in the base system. Choose another directory."
+          continue
+        fi
+        should_mount="yes"
+        break
+      done
+
+      additional_partition_entries+=("$target_partition|$fs|$mount_point|$should_mount")
+      used_partitions["$target_partition"]=1
+      log_success "Queued $target_partition for inclusion."
+    done
+  }
+
   boot_partition="${partition_names[0]}"
   swap_partition="${partition_names[1]}"
   root_partition="${partition_names[2]}"
@@ -249,56 +366,7 @@ get_partitions() {
   log_info "  EFI : $boot_partition"
   log_info "  Swap: $swap_partition"
   log_info "  Root: $root_partition"
-
-  if ((${#extra_partitions[@]} == 0)); then
-    return
-  fi
-
-  log_blank
-  log_title "Additional partitions detected"
-  local entry
-  for entry in "${extra_partitions[@]}"; do
-    IFS="|" read -r part_name part_size part_fstype <<< "$entry"
-    while true; do
-      read -r -p "Include $part_name ($part_size, filesystem: ${part_fstype:-unknown})? [y/N]: " include_partition </dev/tty
-      include_partition="${include_partition,,}"
-      if [[ -z "$include_partition" || "$include_partition" == "n" || "$include_partition" == "no" ]]; then
-        log_info "Ignoring $part_name."
-        break
-      elif [[ "$include_partition" == "y" || "$include_partition" == "yes" ]]; then
-        local fs="ext4"
-        log_info "$part_name will be formatted as $fs."
-
-        local should_mount="no"
-        local mount_point=""
-        while true; do
-          read -r -p "Where should $part_name be mounted? (use {homedir} for /home/\$username, blank or 'no' to skip): " mount_point </dev/tty
-          mount_point="${mount_point,,}"
-          if [[ -z "$mount_point" || "$mount_point" == "no" ]]; then
-            should_mount="no"
-            mount_point=""
-            break
-          fi
-          if [[ "$mount_point" != \{homedir\}* && "$mount_point" != /* ]]; then
-            log_warn "Mount points must start with '/' or '{homedir}'."
-            continue
-          fi
-          local validation_target="$mount_point"
-          validation_target="${validation_target//\{homedir\}/\/home\/\$username}"
-          if is_reserved_mountpoint "$validation_target"; then
-            log_warn "That path already exists in the base system. Choose another directory."
-            continue
-          fi
-          should_mount="yes"
-          break
-        done
-        additional_partition_entries+=("$part_name|$fs|$mount_point|$should_mount")
-        break
-      else
-        log_warn "Please answer yes or no."
-      fi
-    done
-  done
+  offer_additional_partitions
 }
 
 format_partitions() {  
