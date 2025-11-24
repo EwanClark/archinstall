@@ -18,7 +18,7 @@ An Arch Linux installation script that is easy to use and simple that include, d
 Run the installation script with:
 
 ```bash
-curl -L https://raw.githubusercontent.com/EwanClark/archinstall/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/EwanClark/archinstall/main/install.sh | bash
 ```
 
 Or clone and run manually:
